@@ -11,7 +11,7 @@ from sqlalchemy.exc import ArgumentError
 class Settings(BaseSettings):
     database_url: SecretStr = SecretStr("")
     jwt_secret: SecretStr = SecretStr("")
-    frontend_origins: str = "http://localhost:5173"
+    frontend_origins: str = ""
     sentinel_hub_client_id: str = ""
     sentinel_hub_client_secret: str = ""
     agmarknet_api_key: str = ""
@@ -50,6 +50,8 @@ class Settings(BaseSettings):
     @field_validator("frontend_origins")
     @classmethod
     def validate_frontend_origins(cls, value: str) -> str:
+        if not value.strip():
+            return ""
         origins = [origin.strip().rstrip("/") for origin in value.split(",") if origin.strip()]
         if not origins or "*" in origins:
             raise ValueError("FRONTEND_ORIGINS must contain explicit HTTP(S) origins and cannot use '*'.")

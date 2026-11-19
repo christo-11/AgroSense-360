@@ -212,6 +212,43 @@ def test_rejects_invalid_geojson_and_weak_secrets(client, test_email, test_email
         Settings(frontend_origins="*")
 
 
+def test_cors_allows_configured_origin_preflight_and_rejects_other_origins(client):
+    preflight_headers = {
+        "Origin": "http://localhost:5173",
+        "Access-Control-Request-Method": "GET",
+        "Access-Control-Request-Headers": "authorization,content-type",
+    }
+    response = client.options("/api/v1/crops", headers=preflight_headers)
+
+    assert response.status_code == 200
+    assert response.headers["access-control-allow-origin"] == "http://localhost:5173"
+    assert response.headers["access-control-allow-credentials"] == "true"
+    assert "GET" in response.headers["access-control-allow-methods"]
+    assert (
+        client.get(
+            "/api/v1/crops?limit=1",
+            headers={"Origin": "http://localhost:5173"},
+        ).status_code
+        == 200
+    )
+
+    denied = client.options(
+        "/api/v1/crops",
+        headers={**preflight_headers, "Origin": "https://unlisted.example"},
+    )
+    assert denied.status_code == 400
+    assert "access-control-allow-origin" not in denied.headers
+
+
+def test_frontend_origins_are_explicit_and_support_multiple_origins():
+    settings = Settings(
+        frontend_origins=" http://localhost:5173/ , https://portfolio.example "
+    )
+
+    assert settings.cors_origins == ["http://localhost:5173", "https://portfolio.example"]
+    assert Settings(frontend_origins="").cors_origins == []
+
+
 def test_hosted_postgres_url_validation_keeps_credentials_secret():
     settings = Settings(
         database_url=(

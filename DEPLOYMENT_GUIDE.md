@@ -22,7 +22,7 @@ Backend secrets belong in the hosting provider's secret manager: database URL/pa
 
 Use a private database connection and least-privilege database role. Do not place a Supabase service-role key in the browser; this app uses SQLAlchemy server-side database access. Restrict database ingress to the API where possible. Enable TLS and rotate credentials if exposed.
 
-Set explicit CORS origins and methods. Do not use wildcard origins with credentials. Keep secrets out of logs, error responses, source maps, and telemetry. The current `/api/v1/status` reports connectivity/mode but should not be expanded to return secret values.
+Set `FRONTEND_ORIGINS` to the exact browser origin(s), comma-separated (scheme, host, and optional port; no paths). Use localhost only for local development; production should list only its HTTPS frontend origins. An unset value disables cross-origin browser access. CORS allows only the configured origins and the API's explicit methods/headers; wildcard origins are rejected when credentials are enabled. Keep secrets out of logs, error responses, source maps, and telemetry. The current `/api/v1/status` reports connectivity/mode but should not be expanded to return secret values.
 
 ## Database and migrations
 
