@@ -1,0 +1,47 @@
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_DB: agrosense
+      POSTGRES_USER: agrosense
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U agrosense -d agrosense"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  api:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgresql+psycopg://agrosense:${POSTGRES_PASSWORD}@db:5432/agrosense
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
+      FRONTEND_ORIGINS: ${FRONTEND_ORIGINS:-http://localhost:8080}
+      PUBLIC_DEMO_MODE: ${PUBLIC_DEMO_MODE:-false}
+      SENTINEL_HUB_CLIENT_ID: ${SENTINEL_HUB_CLIENT_ID:-}
+      SENTINEL_HUB_CLIENT_SECRET: ${SENTINEL_HUB_CLIENT_SECRET:-}
+      AGMARKNET_API_KEY: ${AGMARKNET_API_KEY:-}
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8000}
+        VITE_PUBLIC_DEMO: ${VITE_PUBLIC_DEMO:-false}
+    depends_on:
+      - api
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
