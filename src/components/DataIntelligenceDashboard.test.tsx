@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { api } from "../api";
 import DataIntelligenceDashboard from "./DataIntelligenceDashboard";
 
@@ -239,6 +239,34 @@ describe("DataIntelligenceDashboard", () => {
     expect(screen.getByText("Exact CDS request parameters remain unconfirmed.")).toBeTruthy();
     expect(screen.getAllByText("Archive size does not match the manifest.").length).toBeGreaterThan(0);
     expect(screen.getByText(/does not generate crop predictions or recommendations/)).toBeTruthy();
+  });
+
+  it("uses acquisition metadata for an interactive source inventory chart", async () => {
+    vi.mocked(api.dataIntelligenceSummary).mockResolvedValue({
+      ...summary,
+      total_sources: 2,
+      acquisition_status_counts: { PROVENANCE_CONFLICT: 1, ACQUIRED_VERIFIED: 1 },
+    });
+    vi.mocked(api.dataIntelligenceSources).mockResolvedValue({
+      items: [
+        source,
+        { ...source, id: "other-source", name: "Other source", acquisition_status: "ACQUIRED_VERIFIED" },
+      ],
+      total: 2,
+      limit: 100,
+      offset: 0,
+    });
+
+    render(<DataIntelligenceDashboard />);
+
+    const statusBar = await screen.findByRole("button", { name: "Filter inventory by Provenance conflict (1)" });
+    expect(screen.getByText(/Counts describe registered source metadata only/)).toBeTruthy();
+
+    fireEvent.click(statusBar);
+
+    expect(statusBar.getAttribute("aria-pressed")).toBe("true");
+    expect(screen.getByText("1 of 2 records shown")).toBeTruthy();
+    expect(screen.queryByText("Other source")).toBeNull();
   });
 
   it("renders acquisition data when it is the only successful API section", async () => {

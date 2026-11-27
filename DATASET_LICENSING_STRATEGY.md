@@ -4,39 +4,76 @@
 
 AgroSense-360 has two distinct uses: a public non-commercial portfolio demonstration and a possible future commercial product. Permission for one does not imply permission for the other. Educational, research, open-access, or non-commercial terms are not commercial clearance.
 
-The source of record is [`data/metadata/source_inventory.json`](./data/metadata/source_inventory.json), with source research and limitations in [`DATASET_INVENTORY.md`](./DATASET_INVENTORY.md). Reviews are resource-specific, not website-wide. `portfolio_reviews` controls the portfolio/research classification. The separate `commercial_reviews.approval_status` and signed training eligibility gate control data entering ML training. A portfolio-only status never approves model training.
+The source of record is [`data/metadata/source_inventory.json`](./data/metadata/source_inventory.json), with source research and limitations in [`DATASET_INVENTORY.md`](./DATASET_INVENTORY.md). Reviews are resource-specific, not website-wide. `portfolio_reviews` controls the internal portfolio/research licence/terms classification. The separate `commercial_reviews.approval_status` and signed training eligibility gate control data entering ML training. A portfolio-only status never approves model training.
 
 ## Status definitions
 
-- `APPROVED_PORTFOLIO_AND_COMMERCIAL` — permission and obligations reviewed for both uses, for the exact resource/version.
-- `APPROVED_PORTFOLIO_RESEARCH_ONLY` — use is restricted to the documented non-commercial portfolio/research scope and its attribution/usage terms.
-- `CONDITIONAL` — a specific term, access right, or intended-use question remains unresolved; do not integrate or redistribute pending review.
-- `BLOCKED` — known restrictions conflict with the intended use.
+- `APPROVED` — exact commercial-use terms, version, attribution, redistribution rights, access, and third-party rights are verified for the resource; required evidence and an allowlisted reviewer signature are present.
+- `CONDITIONAL` — a specific term, access right, or intended-use question remains unresolved; do not acquire, integrate, or redistribute pending review.
+- `BLOCKED` — known restrictions conflict with the intended commercial use.
+- `REJECTED` — the project has decided not to use the exact resource for the stated purpose.
+
+Portfolio classifications are separate:
+- `APPROVED_PORTFOLIO_AND_COMMERCIAL` — internal inventory assessment that publisher terms and obligations appear compatible with both stated categories for the exact resource/version.
+- `APPROVED_PORTFOLIO_RESEARCH_ONLY` — internal inventory assessment of apparent publisher licence/terms compatibility for a limited, non-commercial portfolio/research category.
 - `UNVERIFIED` — resource-level permission, rights, schema, or ownership has not been established.
 
-Only the separate commercial approval gate's signed `APPROVED` status can allow a source to proceed toward training. Quality, geography/crop relevance, acquisition, and provenance checks are still required.
+**Governance boundary:** These values are internal inventory assessments, not project-owner authorization or source-owner permission. `APPROVED_PORTFOLIO_RESEARCH_ONLY` is not approval to access or acquire data, conduct research, train ML, publicly demonstrate, or deploy. Publisher terms that appear compatible do not themselves authorize project activity. Portfolio/demo and pilot research remain separate project permission scopes; Stage 40 currently marks both **NOT AUTHORIZED**.
+
+New commercial reviews use only `APPROVED`, `CONDITIONAL`, `BLOCKED`, or `REJECTED`; unresolved research is recorded as `CONDITIONAL`, not as an implied approval. Only the separate commercial approval gate's signed `APPROVED` status can allow a source to proceed toward training. Quality, geography/crop relevance, acquisition, and provenance checks are still required.
 
 ## Current resource classification
 
 The inventory is checked as of 2026-11-19. No dataset has been downloaded. Each `dataset_version` is `null` with `version_status: NOT_ACQUIRED`; this is intentionally not replaced with a guessed “latest” version.
 
-| Resource and official source | Portfolio status | Commercial/training status | Current limitation |
+| Exact resource and publisher | Internal portfolio licence/terms classification | Commercial/training status | Current limitation |
 |---|---|---|---|
-| [data.gov.in district crop production](https://www.data.gov.in/resource/district-wise-season-wise-crop-production-statistics-1997) | UNVERIFIED | UNVERIFIED | Catalog/API returned access errors in prior checks; Kerala rows, schema, units, and resource terms unresolved. |
-| [FAOSTAT QCL](https://www.fao.org/faostat/en/#data/QCL) | BLOCKED | BLOCKED | Additional terms restrict use in connection with commercial enterprise/product/service promotion; archive was not acquired. |
-| [Kerala Agricultural University](https://kau.in/) | UNVERIFIED | UNVERIFIED | No resource-specific, versioned dataset or reuse terms verified. |
-| [AGMARKNET/data.gov.in](https://agmarknet.gov.in/) | UNVERIFIED | UNVERIFIED | API schema, Kerala coverage, prices/arrivals units, and reuse terms unresolved. |
-| [SoilGrids 2.0](https://docs.isric.org/globaldata/soilgrids/SoilGrids_faqs.html) | CONDITIONAL | CONDITIONAL | Product attribution and contributor-data separation need review; gridded estimates are not lab labels. |
-| [WoSIS](https://docs.isric.org/globaldata/wosis/) | UNVERIFIED | UNVERIFIED | Contributor-specific rights; selected records not reviewed. |
-| [Soil Health Card](https://soilhealth.dac.gov.in/) | UNVERIFIED | UNVERIFIED | No permitted georeferenced export or individual record permission verified. |
-| [Sentinel-2 L2A](https://documentation.dataspace.copernicus.eu/Data/SentinelMissions/Sentinel2.html) | CONDITIONAL | CONDITIONAL | Verify selected product/asset legal terms and attribution; no imagery acquired. |
-| [ERA5-Land](https://cds.climate.copernicus.eu/datasets/reanalysis-era5-land) | CONDITIONAL | CONDITIONAL | Accept and retain terms for the actual request; no data acquired. |
-| [NASA GPM IMERG](https://gpm.nasa.gov/data/imerg) | CONDITIONAL | CONDITIONAL | Confirm product/version and third-party terms before use; no data acquired. |
-| [Open-Meteo Historical API](https://open-meteo.com/en/terms) | APPROVED_PORTFOLIO_RESEARCH_ONLY | BLOCKED | Free API is non-commercial and requires CC-BY attribution. It is not connected/queried; this does not allow commercial product or training use. |
-| [PlantVillage](https://github.com/spMohanty/PlantVillage-Dataset) | UNVERIFIED | UNVERIFIED | Mirror license does not establish upstream image-level rights; no images acquired. |
-| [PlantDoc](https://github.com/pratikkayal/PlantDoc-Dataset) | UNVERIFIED | UNVERIFIED | Repository license does not resolve web-scraped image-level rights; no images acquired. |
+| [District-wise, season-wise crop production](https://www.data.gov.in/resource/district-wise-season-wise-crop-production-statistics-1997) — Government of India | UNVERIFIED | CONDITIONAL | Exact resource licence, access schema, Kerala rows, units, and version unresolved; resource page returned 403. |
+| [FAOSTAT QCL](https://www.fao.org/faostat/en/#data/QCL) — FAO | BLOCKED | BLOCKED | CC BY 4.0 is supplemented by FAO database terms prohibiting commercial promotion use; archive not acquired. |
+| [KAU crop, variety and observatory information](https://kau.in/) — Kerala Agricultural University | UNVERIFIED | CONDITIONAL | No exact structured dataset, version, or resource-specific reuse terms identified. |
+| [Current daily mandi prices](https://www.data.gov.in/resource/current-daily-price-various-commodities-various-markets-mandi) — Government of India / AGMARKNET | UNVERIFIED | CONDITIONAL | Exact resource licence, API schema, Kerala coverage, units, and format unresolved; API requires a key. |
+| [SoilGrids 2.0](https://docs.isric.org/globaldata/soilgrids/SoilGrids_faqs.html) — ISRIC | CONDITIONAL | CONDITIONAL | Applicable product licence not text-verified; modeled 250 m values are not lab labels. |
+| [WoSIS profiles](https://docs.isric.org/globaldata/wosis/faq-wosis.html) — ISRIC and providers | UNVERIFIED | CONDITIONAL | Rights are contributor-specific; no selected record or license reviewed. |
+| [India Soil Health Card](https://soilhealth.dac.gov.in/) — Government of India | UNVERIFIED | CONDITIONAL | No permitted georeferenced bulk export or record-level permission verified. |
+| [Sentinel-2 L2A](https://documentation.dataspace.copernicus.eu/Data/SentinelMissions/Sentinel2.html) — Copernicus / EU | CONDITIONAL | CONDITIONAL | Data Space says Sentinel data are free/full/open, but exact linked notice and selected asset were not reviewed; download account required. |
+| [ERA5-Land](https://cds.climate.copernicus.eu/datasets/reanalysis-era5-land) — ECMWF / Copernicus CDS | APPROVED_PORTFOLIO_RESEARCH_ONLY | CONDITIONAL | Cited publisher terms may appear compatible with limited non-commercial portfolio display, subject to Copernicus Licence v1.2, C3S attribution/disclaimer, the exact CDS request, and third-party asset terms. This is not project authorization. |
+| [NASA GPM IMERG V07B](https://gpm.nasa.gov/data/imerg) — NASA | APPROVED_PORTFOLIO_RESEARCH_ONLY | CONDITIONAL | Cited GPM/NASA terms may appear compatible with limited non-commercial portfolio display, subject to GPM citation/acknowledgement and exact asset metadata. This is not project authorization; future commercial use remains separate and no download exists. |
+| [Open-Meteo Historical API](https://open-meteo.com/en/terms) — Open-Meteo | APPROVED_PORTFOLIO_RESEARCH_ONLY | BLOCKED | The free API terms are non-commercial and require attribution; no query was made. This inventory classification does not authorize a query or project activity. Commercial use would require a paid plan, excluded here. |
+| [PlantVillage](https://huggingface.co/datasets/mohanty/PlantVillage) — authors / Hugging Face mirror | UNVERIFIED | CONDITIONAL | Mirror card declares CC BY-SA 3.0; upstream image rights and license scope unresolved. |
+| [PlantDoc classification dataset](https://github.com/pratikkayal/PlantDoc-Dataset) — authors | UNVERIFIED | CONDITIONAL | Repository declares CC BY 4.0, but underlying web-scraped image rights are not established. |
 
-No source is approved for both portfolio and commercial reuse, and no training dataset is approved or acquired.
+No source is approved for commercial reuse or training, and no dataset is acquired. No candidate was rejected; unresolved terms remain conditional or blocked rather than being treated as permission.
+
+## Stage 12D weather licence/terms compatibility assessments
+
+### ERA5-Land hourly data from 1950 to present
+
+The inventory's `APPROVED_PORTFOLIO_RESEARCH_ONLY` value is an internal assessment that cited publisher terms may appear compatible with a limited, non-commercial portfolio/research category, subject to the exact resource and terms. It is not project-owner authorization, source-owner permission, or approval to access, acquire, research, publicly demonstrate, or deploy. Portfolio/demo and pilot research are separate scopes, and Stage 40 currently marks both **NOT AUTHORIZED**. The applicable official licence is [Licence to Use Copernicus Products v1.2](https://apps.ecmwf.int/datasets/licences/copernicus/), November 2019, supplemented by [CDS Terms of Use](https://cds.climate.copernicus.eu/disclaimer-privacy).
+
+The licence permits reproduction, distribution, communication to the public, adaptation, modification and combination for lawful purposes worldwide, free of charge and royalty-free. Public use requires clear C3S attribution. Adapted distributions require the Copernicus modified-information notice and the required disclaimer that neither the European Commission nor ECMWF is responsible for use. Clause 7 excludes labelled third-party products or data that may have separate terms. ERA5-Land is reanalysis/model output rather than station observations. This inventory classification does not authorize acquisition; any acquisition requires a separate valid project-owner decision and applicable access/terms.
+
+Future commercial-use review remains separate and is still **CONDITIONAL** in the commercial review. This portfolio classification does not satisfy project-owner authorization or the training gate.
+
+### NASA GPM IMERG Final Run V07B
+
+The inventory's `APPROVED_PORTFOLIO_RESEARCH_ONLY` value is an internal assessment that the cited publisher terms may appear compatible with a limited, non-commercial portfolio/research category, subject to exact asset terms. It is not project-owner authorization, source-owner permission, or approval to access, acquire, research, train ML, publicly demonstrate, or deploy. Portfolio/demo and pilot research are separate scopes; Stage 40 currently marks both **NOT AUTHORIZED**. The cited evidence is the [GPM & TRMM Data Usage Policy](https://gpm.nasa.gov/data/policy), [IMERG V07 Release Notes](https://gpm.nasa.gov/resources/documents/imerg-v07-release-notes), [IMERG V07 Technical Documentation](https://gpm.nasa.gov/resources/documents/imerg-v07-technical-documentation) and [NASA ESDIS Data-Use Guidance](https://www.earthdata.nasa.gov/engage/open-data-services-software-policies/data-use-guidance).
+
+The GPM policy says GPM/TRMM data are freely available and requires the dataset source to be acknowledged with authors/producers, title, version, archive/distributor and access date. The GPM policy must not be labelled as CC0. Individual asset metadata must be checked before redistribution because restricted or non-NASA source components may carry separate terms. The inventory classification records only apparent licence/terms compatibility for V07B Final Run; it does not authorize portfolio/public-demo display or any other project activity.
+
+Future commercial-use review remains separate and is still **CONDITIONAL** in the commercial review; no model, provenance manifest or acquired file exists yet. The inventory classification does not satisfy project-owner authorization or the training gate.
+
+## Stage 12 audit outcome
+
+The 2026-11-19 Stage 12 re-review audited all 12 inventoried sources. It found no source that was both resource-license-clear for the project's future-commercial scope and acquired as an original, checksummed file. Consequently:
+
+- no `APPROVED` commercial record was created;
+- no dataset was downloaded or copied from an external source;
+- no raw or intermediate dataset is in the repository;
+- no SHA-256 dataset checksum exists;
+- no dataset quality or relevance verdict was marked `VERIFIED`;
+- no model or preprocessing work was performed.
+
+The approved-then-acquire sequence remains mandatory. A conditional or blocked classification must not be changed by download success or public availability.
 
 ## Required record for each acquisition or use
 

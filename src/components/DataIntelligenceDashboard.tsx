@@ -21,8 +21,8 @@ import {
 
 function statusLabel(status: string) {
   const labels: Record<string, string> = {
-    APPROVED_PORTFOLIO_RESEARCH_ONLY: "Approved for portfolio research",
-    APPROVED_PORTFOLIO_AND_COMMERCIAL: "Approved for portfolio and commercial use",
+    APPROVED_PORTFOLIO_RESEARCH_ONLY: "Licence compatibility classification — not project authorization",
+    APPROVED_PORTFOLIO_AND_COMMERCIAL: "Portfolio + commercial licence/terms classification — not project authorization",
     CONDITIONAL: "Conditional",
     BLOCKED: "Blocked",
     UNVERIFIED: "Unverified",
@@ -95,6 +95,7 @@ export default function DataIntelligenceDashboard() {
   const [provenance, setProvenance] = useState<DataProvenanceItem[]>([]);
   const [errors, setErrors] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedAcquisitionStatus, setSelectedAcquisitionStatus] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -162,6 +163,13 @@ export default function DataIntelligenceDashboard() {
     ...(summary?.validation_warnings ?? summary?.metadata_warnings ?? []),
     ...acquisitionWarnings,
   ])];
+  const acquisitionStatusRows = Object.entries(summary?.acquisition_status_counts ?? {})
+    .filter(([, count]) => Number.isFinite(count) && count > 0)
+    .sort(([left], [right]) => statusLabel(left).localeCompare(statusLabel(right)));
+  const largestAcquisitionCount = Math.max(1, ...acquisitionStatusRows.map(([, count]) => count));
+  const visibleSources = selectedAcquisitionStatus
+    ? sources.filter((source) => source.acquisition_status === selectedAcquisitionStatus)
+    : sources;
 
   return (
     <section className="di-dashboard" aria-label="Agricultural data intelligence dashboard">
@@ -198,15 +206,15 @@ export default function DataIntelligenceDashboard() {
         </article>
         <article className="di-metric-card">
           <FileCheck2 size={18} />
-          <span>Portfolio research approvals</span>
+          <span>Portfolio licence/terms classifications</span>
           <strong>{approvedPortfolio}</strong>
-          <small>{portfolioConditional} conditional · {portfolioBlocked} blocked · {portfolioUnverified} unverified; separate from commercial approval</small>
+          <small>{portfolioConditional} conditional · {portfolioBlocked} blocked · {portfolioUnverified} unverified. These are internal inventory classifications, not project-owner authorization or source-owner permission.</small>
         </article>
         <article className="di-metric-card">
           <ShieldAlert size={18} />
-          <span>Commercially approved sources</span>
+          <span>Sources marked commercially approved</span>
           <strong>{commerciallyApproved}</strong>
-          <small>Portfolio-only status does not authorize commercial use</small>
+          <small>Portfolio classifications do not authorize commercial use; commercial review status is not project authorization.</small>
         </article>
         <article className="di-metric-card">
           <ShieldAlert size={18} />
@@ -221,6 +229,40 @@ export default function DataIntelligenceDashboard() {
           <small>Clearance requires the signed provenance governance gate</small>
         </article>
       </div>
+
+      <section className="di-panel">
+        <div className="di-panel-heading">
+          <div><p className="di-kicker">INVENTORY VISUALIZATION</p><h2>Acquisition status counts</h2></div>
+          {selectedAcquisitionStatus && (
+            <button className="text-link" onClick={() => setSelectedAcquisitionStatus(null)}>Clear filter</button>
+          )}
+        </div>
+        <p className="di-panel-copy">Counts describe registered source metadata only; they do not establish permission or project authorization. Select a status to filter the source inventory.</p>
+        {!summary ? (
+          <p className="di-empty">Acquisition status counts are unavailable.</p>
+        ) : acquisitionStatusRows.length === 0 ? (
+          <p className="di-empty">No acquisition status counts are recorded.</p>
+        ) : (
+          <div className="di-status-chart" role="group" aria-label="Filter source inventory by acquisition status">
+            {acquisitionStatusRows.map(([status, count]) => (
+              <button
+                className={`di-chart-row ${selectedAcquisitionStatus === status ? "is-selected" : ""}`}
+                type="button"
+                key={status}
+                aria-label={`Filter inventory by ${statusLabel(status)} (${count})`}
+                aria-pressed={selectedAcquisitionStatus === status}
+                onClick={() => setSelectedAcquisitionStatus((current) => current === status ? null : status)}
+              >
+                <span className="di-chart-label">{statusLabel(status)}</span>
+                <span className="di-chart-track" aria-hidden="true">
+                  <span style={{ width: `${(count / largestAcquisitionCount) * 100}%` }} />
+                </span>
+                <strong>{count}</strong>
+              </button>
+            ))}
+          </div>
+        )}
+      </section>
 
       <div className="di-section-grid">
         <section className="di-panel">
@@ -284,16 +326,18 @@ export default function DataIntelligenceDashboard() {
       <section className="di-panel">
         <div className="di-panel-heading">
           <div><p className="di-kicker">SOURCE GOVERNANCE</p><h2>Dataset source inventory</h2></div>
-          <span className="di-muted">{sources.length} records shown</span>
+          <span className="di-muted">{visibleSources.length}{selectedAcquisitionStatus ? ` of ${sources.length}` : ""} records shown</span>
         </div>
         {sources.length === 0 ? (
           <p className="di-empty">{loading ? "Loading source records…" : "No dataset sources are registered."}</p>
+        ) : visibleSources.length === 0 ? (
+          <p className="di-empty">No source records match the selected acquisition status.</p>
         ) : (
           <div className="di-table-wrap">
             <table className="di-table">
-              <thead><tr><th>Dataset</th><th>Portfolio status</th><th>Source permission</th><th>Inventory acquisition</th><th>Archive integrity</th><th>Data quality</th><th>Version</th></tr></thead>
+              <thead><tr><th>Dataset</th><th>Portfolio licence/terms classification</th><th>Commercial review status</th><th>Inventory acquisition</th><th>Archive integrity</th><th>Data quality</th><th>Version</th></tr></thead>
               <tbody>
-                {sources.map((source) => (
+                {visibleSources.map((source) => (
                   <tr key={source.id}>
                     <td><strong>{source.name}</strong><small>{source.publisher}</small></td>
                     <td><SourceStatus value={source.portfolio_status} /></td>

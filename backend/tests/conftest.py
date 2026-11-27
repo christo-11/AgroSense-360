@@ -75,7 +75,7 @@ def client(test_emails):
             ) != 4326:
                 raise RuntimeError("PostGIS spatial functions are not available in the connection search path.")
             revision = connection.scalar(text("SELECT version_num FROM alembic_version"))
-            if revision != "5d3cbf283629":
+            if revision != "20261124_plot_dashboard":
                 raise RuntimeError("Apply Alembic migrations through the current agricultural master catalog revision before integration tests.")
 
     test_sessions = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)

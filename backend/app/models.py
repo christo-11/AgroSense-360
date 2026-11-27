@@ -3,6 +3,7 @@ from datetime import date, datetime, timezone
 
 from geoalchemy2 import Geometry
 from sqlalchemy import (
+    Boolean,
     CheckConstraint,
     Column,
     Date,
@@ -61,6 +62,7 @@ class User(Base):
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
     email: Mapped[str] = mapped_column(String(320), unique=True, index=True, nullable=False)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    must_change_password: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("false"), nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False
     )
@@ -368,13 +370,26 @@ class Farm(Base):
 
 class Plot(Base):
     __tablename__ = "plots"
-    __table_args__ = (UniqueConstraint("farm_id", "name", name="uq_plot_farm_name"),)
+    __table_args__ = (
+        UniqueConstraint("farm_id", "name", name="uq_plot_farm_name"),
+        CheckConstraint("area_value IS NULL OR area_value > 0", name="ck_plot_area_positive"),
+        CheckConstraint("area_unit IS NULL OR area_unit IN ('acres', 'hectares')", name="ck_plot_area_unit"),
+        CheckConstraint(
+            "(latitude IS NULL AND longitude IS NULL) OR (latitude IS NOT NULL AND longitude IS NOT NULL)",
+            name="ck_plot_coordinates_pair",
+        ),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
     farm_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("farms.id", ondelete="CASCADE"), index=True, nullable=False)
     name: Mapped[str] = mapped_column(String(120), nullable=False)
     crop: Mapped[str | None] = mapped_column(String(120))
-    boundary = mapped_column(Geometry(geometry_type="MULTIPOLYGON", srid=4326, spatial_index=True), nullable=False)
+    crop_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("crops.id", ondelete="SET NULL"), index=True)
+    area_value: Mapped[float | None] = mapped_column(Numeric(12, 4))
+    area_unit: Mapped[str | None] = mapped_column(String(16))
+    latitude: Mapped[float | None] = mapped_column(Numeric(9, 6))
+    longitude: Mapped[float | None] = mapped_column(Numeric(9, 6))
+    boundary = mapped_column(Geometry(geometry_type="MULTIPOLYGON", srid=4326, spatial_index=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False
     )

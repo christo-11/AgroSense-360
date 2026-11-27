@@ -22,6 +22,8 @@ Set at least:
 
 Do not print `.env` or credential values to logs or chat. Supabase service-role keys and database passwords belong only in the backend secret store, never in the browser or a `VITE_*` setting.
 
+If credentials in `.env` were exposed, treat them as compromised: rotate the database password in the database provider and update `DATABASE_URL`; replace `JWT_SECRET` with a new private random value of at least 32 characters (this invalidates existing access tokens); revoke and replace any exposed provider/API keys; and restart the API with the updated secrets. If a Supabase service-role key was exposed, revoke it in Supabase and review access/authentication logs. Clear the browser session and sign in again. Do not paste old or new secret values into logs, Git, or support requests.
+
 ## Start the application
 
 Start the frontend from the project root:
@@ -44,6 +46,8 @@ The frontend is served at `http://localhost:5173`; FastAPI is served at `http://
 
 Migrations are additive, but inspect the current revision and take a verified backup before applying them to any database with existing data. Do not downgrade the agricultural catalog migration in a database containing catalog content.
 
+Docker Compose stores uploaded research documents and per-account model artifacts in the persistent `research_data` volume. `docker compose down` preserves it; `docker compose down -v` deletes it. A backend started directly with Uvicorn instead stores these files under the repository's ignored `.agrosense` directory.
+
 ## Tests and checks
 
 Run backend tests against the isolated in-memory SQLite fixture:
@@ -54,9 +58,10 @@ Push-Location backend
 Pop-Location
 ```
 
-Build and type-check the frontend:
+Run frontend tests, then build and type-check the frontend:
 
 ```powershell
+npm.cmd test
 npm.cmd run build
 ```
 

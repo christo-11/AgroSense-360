@@ -15,8 +15,13 @@ class Settings(BaseSettings):
     sentinel_hub_client_id: str = ""
     sentinel_hub_client_secret: str = ""
     agmarknet_api_key: str = ""
+    agmarknet_reuse_confirmed: bool = False
     agricultural_admin_emails: str = ""
     public_demo_mode: bool = False
+    open_meteo_noncommercial_enabled: bool = False
+    ollama_base_url: str = ""
+    ollama_model: str = ""
+    research_document_dir: Path = Path(__file__).resolve().parents[2] / ".agrosense" / "research_documents"
     model_config = SettingsConfigDict(
         env_file=Path(__file__).resolve().parents[2] / ".env",
         extra="ignore",

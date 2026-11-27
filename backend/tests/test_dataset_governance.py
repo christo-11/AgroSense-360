@@ -25,6 +25,8 @@ def _approved_inventory_record(status: str = "APPROVED") -> tuple[dict, dict]:
         "name": "Licensed test resource",
         "publisher": "Example Publisher",
         "official_url": "https://example.org/dataset",
+        "geographic_coverage": "Kerala records verified",
+        "file_format": "CSV",
         "download_status": "acquired",
         "local_path": "data/raw/example.csv",
     }
@@ -34,6 +36,7 @@ def _approved_inventory_record(status: str = "APPROVED") -> tuple[dict, dict]:
         "approval_status": status,
         "commercial_use_status": "PERMITTED",
         "license_name": "Example Commercial License",
+        "license_version": "1.0",
         "license_url": "https://example.org/license",
         "attribution_obligations": "Credit Example Publisher",
         "share_alike_obligations": "None",
@@ -103,7 +106,7 @@ def test_approved_dataset_requires_matching_provenance(tmp_path: Path) -> None:
     assert eligible["id"] == source["id"]
 
 
-@pytest.mark.parametrize("status", ["BLOCKED", "CONDITIONAL", "UNVERIFIED"])
+@pytest.mark.parametrize("status", ["BLOCKED", "CONDITIONAL", "REJECTED", "UNVERIFIED"])
 def test_non_approved_statuses_are_rejected(status: str, tmp_path: Path) -> None:
     source, review = _approved_inventory_record(status)
     inventory_path = tmp_path / "source_inventory.json"
@@ -129,6 +132,24 @@ def test_approved_dataset_with_missing_license_is_rejected(tmp_path: Path) -> No
         require_training_dataset(
             source["id"], tmp_path / "missing.csv", tmp_path / "missing.json",
             inventory_path, ALLOWED_REVIEWERS, SIGNING_KEY
+        )
+
+
+def test_approved_dataset_with_unverified_license_version_is_rejected(tmp_path: Path) -> None:
+    source, review = _approved_inventory_record()
+    review["license_version"] = "NOT_VERIFIED"
+    inventory_path = tmp_path / "source_inventory.json"
+    _write_inventory(inventory_path, source, review)
+
+    with pytest.raises(DatasetEligibilityError, match="license version is not verified"):
+        record_admin_review(
+            inventory_path,
+            source["id"],
+            "APPROVED",
+            ADMIN_EMAIL,
+            ALLOWED_REVIEWERS,
+            "Review complete",
+            SIGNING_KEY,
         )
 
 
@@ -269,7 +290,7 @@ def test_project_sources_cannot_enter_training_until_approved(tmp_path: Path) ->
     dummy_data = tmp_path / "not-used"
     dummy_manifest = tmp_path / "not-used.json"
 
-    with pytest.raises(DatasetEligibilityError, match="is UNVERIFIED"):
+    with pytest.raises(DatasetEligibilityError, match="is CONDITIONAL"):
         require_training_dataset(
             source_id, dummy_data, dummy_manifest, inventory_path, ALLOWED_REVIEWERS
         )
@@ -297,11 +318,41 @@ def test_project_inventory_keeps_portfolio_rights_separate_from_training_gate() 
         for review in portfolio_reviews.values()
     )
     assert portfolio_reviews["open_meteo_historical"]["status"] == "APPROVED_PORTFOLIO_RESEARCH_ONLY"
+    assert portfolio_reviews["era5_land"]["status"] == "APPROVED_PORTFOLIO_RESEARCH_ONLY"
+    assert portfolio_reviews["nasa_gpm_imerg"]["status"] == "APPROVED_PORTFOLIO_RESEARCH_ONLY"
     assert commercial_reviews["open_meteo_historical"]["approval_status"] == "BLOCKED"
+    assert commercial_reviews["era5_land"]["approval_status"] == "CONDITIONAL"
+    assert commercial_reviews["nasa_gpm_imerg"]["approval_status"] == "CONDITIONAL"
+    era5_land = next(dataset for dataset in inventory["datasets"] if dataset["id"] == "era5_land")
+    assert era5_land["dataset_version"] is None
+    assert era5_land["version_status"] == "ACQUIRED_VERSION_UNPINNED"
+    assert era5_land["download_status"] == "acquired"
+    assert era5_land["acquisition_status"] == "ACQUIRED_VERIFIED"
+    assert era5_land["archive_integrity_status"] == "VERIFIED"
+    assert era5_land["data_quality_status"] == "QUALITY_REJECTED"
     assert all(
-        dataset["dataset_version"] is None and dataset["version_status"] == "NOT_ACQUIRED"
+        dataset["dataset_version"] is None
+        and dataset["version_status"] == "NOT_ACQUIRED"
+        for dataset in inventory["datasets"]
+        if dataset["id"] != "era5_land"
+    )
+    assert all(
+        dataset["download_status"].startswith("not_downloaded")
+        or dataset["download_status"] in {"metadata_verified_only", "blocked_pending_commercial_use_decision"}
+        or dataset["id"] == "era5_land"
         for dataset in inventory["datasets"]
     )
+    assert all(
+        dataset["sha256"] is None
+        and dataset["local_path"] is None
+        and (
+            dataset["download_date"] == "2026-11-20"
+            if dataset["id"] == "era5_land"
+            else dataset["download_date"] is None
+        )
+        for dataset in inventory["datasets"]
+    )
+    assert inventory["stage_status"]["stage_6b"].startswith("stage_12")
     assert inventory["stage_status"]["stage_7"].startswith("not_started")
     assert inventory["stage_status"]["stage_8"].startswith("not_started")
     assert inventory["stage_status"]["stage_9"].startswith("not_started")
@@ -313,8 +364,8 @@ def test_project_inventory_keeps_portfolio_rights_separate_from_training_gate() 
         ("faostat_qcl", "BLOCKED"),
         ("open_meteo_historical", "BLOCKED"),
         ("soilgrids_v2", "CONDITIONAL"),
-        ("plantvillage", "UNVERIFIED"),
-        ("plantdoc", "UNVERIFIED"),
+        ("plantvillage", "CONDITIONAL"),
+        ("plantdoc", "CONDITIONAL"),
     ],
 )
 def test_unapproved_project_sources_fail_before_input_access(

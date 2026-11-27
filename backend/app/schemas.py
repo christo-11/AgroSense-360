@@ -112,9 +112,14 @@ class FarmRead(BaseModel):
 
 
 class PlotCreate(BaseModel):
-    name: str = Field(min_length=1, max_length=120)
+    name: str | None = Field(default=None, min_length=1, max_length=120)
     crop: str | None = Field(default=None, max_length=120)
-    boundary: dict[str, Any]
+    crop_id: uuid.UUID | None = None
+    area_value: float | None = Field(default=None, gt=0, le=1_000_000, allow_inf_nan=False)
+    area_unit: Literal["acres", "hectares"] | None = None
+    latitude: float | None = Field(default=None, ge=-90, le=90, allow_inf_nan=False)
+    longitude: float | None = Field(default=None, ge=-180, le=180, allow_inf_nan=False)
+    boundary: dict[str, Any] | None = None
 
     model_config = ConfigDict(extra="forbid")
 
@@ -123,18 +128,28 @@ class PlotCreate(BaseModel):
     def strip_text(cls, value: Any) -> Any:
         return value.strip() or None if isinstance(value, str) else value
 
+    @model_validator(mode="after")
+    def validate_plot_location_and_area(self) -> "PlotCreate":
+        if (self.area_value is None) != (self.area_unit is None):
+            raise ValueError("Plot area and its unit must be provided together.")
+        if (self.latitude is None) != (self.longitude is None):
+            raise ValueError("Plot latitude and longitude must be provided together.")
+        return self
+
     @field_validator("boundary")
     @classmethod
-    def check_boundary(cls, value: Any) -> dict[str, Any]:
-        validated = validate_boundary(value)
-        if validated is None:
-            raise ValueError("Plot boundary is required.")
-        return validated
+    def check_boundary(cls, value: Any) -> dict[str, Any] | None:
+        return validate_boundary(value)
 
 
 class PlotUpdate(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=120)
     crop: str | None = Field(default=None, max_length=120)
+    crop_id: uuid.UUID | None = None
+    area_value: float | None = Field(default=None, gt=0, le=1_000_000, allow_inf_nan=False)
+    area_unit: Literal["acres", "hectares"] | None = None
+    latitude: float | None = Field(default=None, ge=-90, le=90, allow_inf_nan=False)
+    longitude: float | None = Field(default=None, ge=-180, le=180, allow_inf_nan=False)
     boundary: dict[str, Any] | None = None
 
     model_config = ConfigDict(extra="forbid")
@@ -155,7 +170,12 @@ class PlotRead(BaseModel):
     farm_id: uuid.UUID
     name: str
     crop: str | None
-    boundary: dict[str, Any]
+    crop_id: uuid.UUID | None
+    area_value: float | None
+    area_unit: str | None
+    latitude: float | None
+    longitude: float | None
+    boundary: dict[str, Any] | None
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
@@ -164,6 +184,13 @@ class PlotRead(BaseModel):
 class TokenRead(BaseModel):
     access_token: str
     token_type: str = "bearer"
+    must_change_password: bool = False
+
+
+class PasswordChange(BaseModel):
+    new_password: str = Field(min_length=10, max_length=128)
+
+    model_config = ConfigDict(extra="forbid")
 
 
 T = TypeVar("T")

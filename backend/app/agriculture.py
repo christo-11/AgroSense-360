@@ -287,6 +287,134 @@ def list_district_crops(
     )
 
 
+@router.get("/agricultural-research/idukki-black-pepper")
+def idukki_black_pepper_readiness(db: Session = Depends(get_db)) -> dict:
+    crop = db.scalar(
+        select(Crop)
+        .options(joinedload(Crop.profile).selectinload(CropProfile.sources))
+        .where(Crop.slug == "black-pepper")
+    )
+    if crop is None:
+        crop = db.scalar(
+            select(Crop)
+            .options(joinedload(Crop.profile).selectinload(CropProfile.sources))
+            .where(Crop.common_name_key == normalized_key("black pepper"))
+        )
+    district = db.scalar(select(District).where(District.slug == "idukki"))
+    if district is None:
+        district = db.scalar(select(District).where(District.name_key == normalized_key("Idukki")))
+
+    profile = crop.profile if crop else None
+    associations = (
+        db.scalars(
+            select(DistrictCropSuitability)
+            .options(
+                joinedload(DistrictCropSuitability.variety),
+                selectinload(DistrictCropSuitability.sources),
+            )
+            .where(
+                DistrictCropSuitability.crop_id == crop.id,
+                DistrictCropSuitability.district_id == district.id,
+            )
+            .order_by(DistrictCropSuitability.variety_id)
+        ).all()
+        if crop and district
+        else []
+    )
+    verified_profile = bool(profile and profile.verification_status == "verified" and profile.sources)
+    verified_climate_ranges = bool(
+        verified_profile
+        and profile.temperature_min_celsius is not None
+        and profile.temperature_max_celsius is not None
+        and profile.rainfall_min_mm_year is not None
+        and profile.rainfall_max_mm_year is not None
+    )
+    verified_association = any(item.verification_status == "verified" for item in associations)
+
+    blockers = []
+    if crop is None:
+        blockers.append("No black-pepper crop record is present in the agricultural catalogue.")
+    if district is None:
+        blockers.append("No Idukki district record is present in the agricultural catalogue.")
+    if profile is None or not verified_profile:
+        blockers.append("A source-verified black-pepper crop profile is not available.")
+    if not verified_climate_ranges:
+        blockers.append("Complete, source-verified temperature and annual-rainfall ranges are not available.")
+    if not verified_association:
+        blockers.append("No source-verified Idukki-black pepper suitability association is available.")
+    blockers.extend(
+        [
+            "The application has no georeferenced Idukki soil-sample records; district soil maps are not plot measurements.",
+            "The agricultural catalogue has no plot/season-level pepper yield observations; profile yield ranges are not training labels.",
+            "No season-specific pepper climate thresholds and field validation protocol are registered.",
+        ]
+    )
+
+    return {
+        "status": "evidence_incomplete",
+        "assessment": "not_computed",
+        "crop": (
+            {
+                "id": str(crop.id),
+                "name": crop.common_name,
+                "scientific_name": crop.scientific_name,
+                "verification_status": profile.verification_status if profile else "pending",
+            }
+            if crop
+            else None
+        ),
+        "district": {"id": str(district.id), "name": district.name} if district else None,
+        "crop_profile": (
+            {
+                "verification_status": profile.verification_status,
+                "temperature_min_celsius": profile.temperature_min_celsius,
+                "temperature_max_celsius": profile.temperature_max_celsius,
+                "rainfall_min_mm_year": profile.rainfall_min_mm_year,
+                "rainfall_max_mm_year": profile.rainfall_max_mm_year,
+                "soil_type": profile.soil_type,
+                "soil_ph_min": profile.soil_ph_min,
+                "soil_ph_max": profile.soil_ph_max,
+                "sources": [
+                    {
+                        "title": source.title,
+                        "publisher": source.publisher,
+                        "url": source.url,
+                        "license": source.license,
+                    }
+                    for source in profile.sources
+                ],
+            }
+            if profile
+            else None
+        ),
+        "district_associations": [
+            {
+                "suitability_status": item.suitability_status,
+                "verification_status": item.verification_status,
+                "variety": item.variety.name if item.variety else None,
+                "sources": [
+                    {
+                        "title": source.title,
+                        "publisher": source.publisher,
+                        "url": source.url,
+                        "license": source.license,
+                    }
+                    for source in item.sources
+                ],
+            }
+            for item in associations
+        ],
+        "readiness": {
+            "verified_climate_ranges": verified_climate_ranges,
+            "verified_district_association": verified_association,
+            "georeferenced_soil_samples": False,
+            "pepper_yield_observations": False,
+            "climate_suitability_result": False,
+        },
+        "blockers": blockers,
+    }
+
+
 @router.post(
     "/agricultural-sources",
     response_model=AgriculturalSourceRead,

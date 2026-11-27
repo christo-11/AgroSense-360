@@ -36,6 +36,16 @@ def create_access_token(user_id: UUID) -> str:
 def current_user(
     token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)
 ) -> User:
+    return _load_user(token, db, allow_password_change=False)
+
+
+def password_change_user(
+    token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)
+) -> User:
+    return _load_user(token, db, allow_password_change=True)
+
+
+def _load_user(token: str, db: Session, *, allow_password_change: bool) -> User:
     settings = get_settings()
     if settings.public_demo_mode:
         raise HTTPException(status_code=503, detail="Authentication is disabled in public demo mode.")
@@ -57,6 +67,11 @@ def current_user(
     user = db.scalar(select(User).where(User.id == user_id))
     if user is None:
         raise credentials_error
+    if user.must_change_password and not allow_password_change:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Change your temporary password before using AgroSense.",
+        )
     return user
 
 

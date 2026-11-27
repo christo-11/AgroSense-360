@@ -33,6 +33,7 @@ __pycache__/
 .ruff_cache/
 .vite/
 .cache/
+.agrosense/
 .coverage
 htmlcov/
 

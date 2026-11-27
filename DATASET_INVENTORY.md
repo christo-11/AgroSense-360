@@ -1,22 +1,37 @@
 # AgroSense-360 Real Agricultural Data Inventory
 
 **Research checked:** 2026-11-19
-**Scope:** Public data discovery and access checks. No agricultural dataset was downloaded, no non-empty credential was used, and no model was trained.
+**Scope:** Official-source, resource-level license/access review and read-only discovery as of 2026-11-19. No dataset was downloaded during that audit, no credential was read or used, and no model was trained. A later Stage 17 provenance reconciliation verified two previously recorded ERA5-Land archives without downloading or modifying them.
 
 ## Executive summary
 
 There are useful public sources for global soil context, satellite imagery, weather, plant disease images, national yield history, and Indian mandi prices. Public availability does not mean that each source is suitable as a local ground-truth label or is licensed for every commercial use.
 
-No source in this inventory has yet been ingested into AgroSense-360. The soil and disease training scripts in `backend/scripts/` require curated, labeled data. In particular, SoilGrids does not provide phosphorus or potassium layers, and modelled SoilGrids values must not be presented as laboratory observations.
+As of the Stage 12 audit on 2026-11-19, no source in this inventory had been ingested into AgroSense-360. On 2026-11-20, two ERA5-Land archive files were later verified against their acquisition and quality records. They remain unsuitable for training. The soil and disease training scripts in `backend/scripts/` require curated, labeled data. In particular, SoilGrids does not provide phosphorus or potassium layers, and modelled SoilGrids values must not be presented as laboratory observations.
 
-Verification included official documentation, public metadata, dataset pages, and read-only access checks. The SoilGrids layer metadata endpoint returned HTTP 200 and described 14 layers; no soil measurements or raster data were acquired. The data.gov.in catalog returned HTTP 403, and the project's `AGMARKNET_API_KEY` setting is empty, so no keyed API request was made. The official FAOSTAT QCL page and database terms were reachable, but its bulk ZIP returned HTTP 403. The AGMARKNET home page returned its JavaScript application shell; its data schema was not verified. These are access-check results, not claims that the sources are unavailable generally.
+The Stage 12 audit checked official source and terms pages on 2026-11-19. SoilGrids documentation and layer metadata were reachable; no soil values or raster were requested. The data.gov.in production resource returned HTTP 403; no API key was read or used. FAO's statistical database terms were reachable, but the prior read-only bulk-file check returned HTTP 403. AGMARKNET returned its JavaScript application shell and no price schema was verified. These are access-check results, not claims that sources are unavailable generally.
+
+As of the 2026-11-19 rights review, no candidate met the complete repository approval gate for the project's potential commercial use; no resource is classified `APPROVED`, and no candidate was classified `REJECTED`. Two ERA5-Land archives were acquired and verified on 2026-11-20, but this did not change source permissions or make them suitable for training. `CONDITIONAL` means terms, access, or rights still require resolution; `BLOCKED` means known terms conflict with the intended commercial use; `REJECTED` would mean the project will not pursue that resource.
+
+## Stage 12 suitability and acquisition decision
+
+| Intended portfolio capability | Suitable source candidate | Current decision | Why it is or is not suitable |
+|---|---|---|---|
+| Soil properties | SoilGrids 2.0 / WoSIS | CONDITIONAL | SoilGrids is modeled 250 m context, not lab ground truth; WoSIS rights vary by provider and a Kerala/P/K-labelled sample set is not yet verified. |
+| Weather and rainfall | ERA5-Land / GPM IMERG / Open-Meteo | CONDITIONAL or BLOCKED | ERA5-Land and IMERG remain account/term-specific and lack a selected asset; Open-Meteo's free API is non-commercial and excluded. |
+| Crop production and yield | data.gov.in district crop production / FAOSTAT QCL | CONDITIONAL / BLOCKED | The district resource needs a live resource licence and key; FAO additional terms prohibit commercial promotion use. |
+| Market prices | AGMARKNET / data.gov.in mandi | CONDITIONAL | Resource-specific licence, key, Kerala coverage, units and schema are not verified. |
+| Crop disease images | PlantVillage / PlantDoc | CONDITIONAL | Repositories and mirrors do not establish all underlying image rights; neither has verified Kerala field provenance. |
+| Crop varieties and agronomic information | KAU publications / observatory | CONDITIONAL | No exact structured, licensed, versioned dataset or publication export was identified. |
+
+At the 2026-11-19 audit, no source from this matrix was acquired. The later ERA5-Land acquisition is recorded separately below; it does not change any source approval. A Kerala-focused licence, selected version/asset, provenance manifest and checksums are still required before a source can progress beyond `CONDITIONAL` or `BLOCKED`.
 
 ## Repository audit and staged execution plan
 
-- Before this update, the repository had no `data/`, `backend/models/`, root `models/`, or `reports/` directory. This change adds only `data/metadata/`; no raw/processed datasets or trained model artifacts were found.
+- The Stage 12 repository scan found no raw/processed datasets or trained model artifacts. Stage 17 later verified the two listed ERA5-Land archives already in `data/raw/`; it added no dataset files.
 - The only ML entry points are `backend/scripts/train_soil_model.py` and `backend/scripts/train_disease_model.py`. The soil trainer uses a random row split and does not capture source, unit, depth, time, or spatial-group provenance. The disease trainer makes a per-image random split and does not consume PlantVillage's leaf-grouped split. Neither should be used for a reported evaluation until its data-specific leakage controls are addressed.
 - The API explicitly reports insight/model services as unavailable; crop-image analysis returns 503. There is no model registry or validated inference artifact.
-- `data.gov.in`, CDS, Earthdata, and Copernicus credentials were not configured in the project `.env`. The existing `AGMARKNET_API_KEY` setting is empty. Secrets were not printed.
+- No credential was read or used in this audit. Sources requiring API keys, accounts, or permission were not accessed with credentials.
 - `.gitignore` now excludes `data/raw/`, `data/interim/`, and `data/processed/`; the small source metadata and reports remain trackable.
 
 Execution dependencies:
@@ -26,7 +41,7 @@ Execution dependencies:
 3. **Stage 8:** train only tasks with validated labels and evaluate against leakage-safe holdouts and baselines. No training was run.
 4. **Stage 9:** add inference endpoints only for models that pass Stage 8 evaluation and are registered with limitations. No model-serving changes were made.
 
-Machine-readable source statuses are recorded in [`data/metadata/source_inventory.json`](./data/metadata/source_inventory.json). Each candidate has `dataset_version: null` and `version_status: NOT_ACQUIRED`; a research page or metadata endpoint being accessible does not mean its measurements were acquired or are suitable for training.
+Machine-readable source statuses are recorded in [`data/metadata/source_inventory.json`](./data/metadata/source_inventory.json). ERA5-Land is now recorded as acquired and archive-integrity verified, but its product version remains unpinned (`dataset_version: null`, `version_status: ACQUIRED_VERSION_UNPINNED`) and its quality status is `QUALITY_REJECTED`. Its individual archive checksums are retained in the acquisition manifest; the source-level checksum remains null because the source consists of multiple archives. The other candidates retain their prior acquisition states. Acquisition or a reachable research page does not mean a dataset is approved or suitable for training.
 
 ## Commercial-use status and approval gate
 
@@ -35,33 +50,35 @@ Statuses apply to each identified resource, not to an entire website:
 - **APPROVED:** commercial use and applicable resource terms are verified, required evidence is recorded, an allowlisted reviewer signs the record, and no concerns remain.
 - **CONDITIONAL:** commercial use may be possible, but terms or obligations still require review. The training gate rejects it.
 - **BLOCKED:** known terms conflict with the intended commercial use. The training gate rejects it.
-- **UNVERIFIED:** resource-level ownership, permissions, access, or terms remain unclear. The training gate rejects it.
+- **REJECTED:** the project has decided not to use the exact resource for the stated purpose.
 
 Current classifications:
 
-| Resource | Status | Commercial-use evidence / blocker |
-|---|---|---|
-| data.gov.in district crop production | UNVERIFIED | Resource page/API schema and resource-specific license could not be inspected (HTTP 403; no key configured). |
-| FAOSTAT QCL | BLOCKED | FAO terms prohibit use in conjunction with promoting a commercial enterprise, product, or service; provider confirmation would be required. |
-| KAU publications/observatory data | UNVERIFIED | No resource-level reuse terms or versioned data export were verified. |
-| AGMARKNET daily mandi prices | UNVERIFIED | API resource, commercial terms, Kerala coverage, units, and arrivals fields remain unverified. |
-| SoilGrids 2.0 | CONDITIONAL | CC-BY-4.0 is reported for products, but exact product attribution/redistribution and contributor-data separation need review. Estimates are not lab labels. |
-| WoSIS profiles | UNVERIFIED | Permissions vary by contributor; selected records need source-specific license checks. |
-| Soil Health Card/lab records | UNVERIFIED | No permitted, georeferenced bulk export or record-level permission was verified. |
-| Sentinel-2 L2A | CONDITIONAL | The product legal notice must be reviewed for the selected asset; the legal-notice PDF was not text-verified in this environment. |
-| ERA5-Land | CONDITIONAL | Product terms, attribution, and redistribution must be reviewed and accepted for the selected request. |
-| NASA GPM IMERG | CONDITIONAL | Confirm release/product-specific data-use and attribution requirements before use. |
-| Open-Meteo Free API | BLOCKED | Official terms restrict the free API to non-commercial use; no API request was made. |
-| PlantVillage | UNVERIFIED | Hugging Face mirror declares CC-BY-SA-3.0, but upstream has no checked license and image-level ownership/scope is unresolved. |
-| PlantDoc | UNVERIFIED | Repository declares CC-BY-4.0, but image-level rights for web-scraped images are not established. |
+| Resource / publisher | Exact resource, license and version | Commercial use, attribution and redistribution | Access, coverage and format | Status |
+|---|---|---|---|---|---|
+| [District-wise, season-wise crop production](https://www.data.gov.in/resource/district-wise-season-wise-crop-production-statistics-1997) — Government of India / data.gov.in | Exact resource named; resource-level license/version not verified. | Commercial permission, attribution and redistribution not verified. | API key required for API access; resource page returned 403. Kerala rows/schema and JSON/CSV format not verified. | CONDITIONAL |
+| [FAOSTAT Crops and Livestock Products (QCL)](https://www.fao.org/faostat/en/#data/QCL) — FAO | CC BY 4.0 plus FAO Statistical Database Terms of Use; additional terms have no version number shown. | Terms prohibit use in conjunction with promoting a commercial enterprise, product or service. FAO citation/attribution and third-party exceptions apply. | Global country/year data; bulk file was not acquired and prior request returned 403. | BLOCKED |
+| [KAU crop, variety and observatory information](https://kau.in/) — Kerala Agricultural University | No exact structured dataset or resource-specific license/version verified. | Permission, attribution and redistribution are unknown; no general website license assumed. | Public HTML and linked PDFs; current observatory page is not a versioned historical data export. Kerala scope; format of any actual dataset unknown. | CONDITIONAL |
+| [Current daily mandi prices](https://www.data.gov.in/resource/current-daily-price-various-commodities-various-markets-mandi) — Government of India / AGMARKNET | Exact resource named; resource-level license/version not verified. | Commercial permission, attribution and redistribution not verified. | API key required for data.gov.in API; catalog returned 403 and AGMARKNET served a JavaScript shell. Kerala coverage, schema and format unverified. | CONDITIONAL |
+| [SoilGrids 2.0](https://docs.isric.org/globaldata/soilgrids/SoilGrids_faqs.html) — ISRIC | ISRIC data policy identified; exact applicable product license/version was not text-verified. | Attribution to ISRIC/product is documented; commercial and redistribution scope remains conditional on the exact policy/product terms. | Global 250 m model predictions at standard depths; JSON metadata/point-query documentation. No raster or values acquired. | CONDITIONAL |
+| [WoSIS profiles](https://docs.isric.org/globaldata/wosis/faq-wosis.html) — ISRIC and contributing providers | No single WoSIS-wide license; terms vary by contributing dataset and version. | Cite ISRIC and the source provider; some profiles cannot be redistributed. | Global georeferenced profiles; selected record, Kerala coverage, export format and license not verified. | CONDITIONAL |
+| [India Soil Health Card](https://soilhealth.dac.gov.in/) — Government of India | No dataset-level license/version or permitted bulk export verified. | Commercial use, attribution and redistribution not verified; do not export farmer-linked records without authorization. | No georeferenced bulk dataset accessed; format and Kerala coverage unavailable. | CONDITIONAL |
+| [Sentinel-2 Level-2A](https://documentation.dataspace.copernicus.eu/Data/SentinelMissions/Sentinel2.html) — Copernicus / European Union | Data Space terms say Sentinel data are free, full and open under the Sentinel Data Legal Notice; no numeric notice version was verified. | Follow the Sentinel notice attribution and modification requirements; portal materials have separate terms. | Global L2A surface reflectance; SAFE/JP2 products. Download requires Copernicus registration; no asset selected. | CONDITIONAL |
+| [ERA5-Land hourly](https://cds.climate.copernicus.eu/datasets/reanalysis-era5-land) — ECMWF / Copernicus CDS | Licence to Use Copernicus Products v1.2 permits reproduction, distribution and adaptation. C3S attribution and disclaimer are mandatory. | Cited Copernicus terms may be compatible with specified publisher-use conditions, including C3S attribution/disclaimer and third-party terms; this is an internal licence/terms compatibility assessment only, not source-owner permission or project-owner authorization. Any acquisition, portfolio/demo, pilot research, public sharing, training, or deployment requires applicable source-owner rights and separate valid purpose-specific project authorization. | Two archives acquired on 2026-11-20: one NetCDF (647,003,080 bytes) and one GRIB (2,026,384,498 bytes). Files, sizes, recorded SHA-256 comparisons and ZIP CRC evidence reconcile; exact CDS query parameters remain unconfirmed because the request-history MHT was not inspected. Both archives are rejected for training. | Training/commercial status remains CONDITIONAL; internal classification: APPROVED_PORTFOLIO_RESEARCH_ONLY (licence/terms assessment only); portfolio/demo and pilot research: NOT AUTHORIZED. |
+| [NASA GPM IMERG Final Run V07B](https://gpm.nasa.gov/data/imerg) — NASA | GPM & TRMM Data Usage Policy and NASA ESDIS guidance require source citation and acknowledgement. Policy is not labelled CC0. | Cited NASA/GPM policy may permit reuse subject to required citation/acknowledgement and exact V07B asset/third-party terms. This is an internal licence/terms compatibility assessment only, not source-owner permission or project-owner authorization. Any acquisition, portfolio/demo, pilot research, public sharing, training, or deployment requires applicable source-owner rights and separate valid purpose-specific project authorization. | Kerala included, 1998-present, 0.1-degree grid, 30-minute/daily/monthly products, HDF/GeoTIFF/NetCDF; no file acquired. | Training/commercial status remains CONDITIONAL; internal classification: APPROVED_PORTFOLIO_RESEARCH_ONLY (licence/terms assessment only); portfolio/demo and pilot research: NOT AUTHORIZED. |
+| [Open-Meteo Historical API](https://open-meteo.com/en/terms) — Open-Meteo | API data: CC BY 4.0; free-service Terms of Use. | Free API is limited to non-commercial use; CC BY attribution/link/change notice applies. Commercial use would require a paid plan, excluded here. | Global model/reanalysis values, JSON API; no request made. Free API has published rate limits. | BLOCKED |
+| [PlantVillage](https://huggingface.co/datasets/mohanty/PlantVillage) — authors / Hugging Face mirror | Mirror card declares CC BY-SA 3.0; upstream GitHub repository has no checked license. | Mirror attribution/share-alike scope does not establish image-level rights; no commercial reuse or redistribution until clarified. | 14 crop species, controlled leaf imagery, no Kerala field provenance; JPG/image records; card states ~2 GB. Headline 54,306 differs from split total 54,305. | CONDITIONAL |
+| [PlantDoc classification dataset](https://github.com/pratikkayal/PlantDoc-Dataset) — authors | Repository declares CC BY 4.0; no separate rights clearance for scraped source images. | Repository attribution applies only to content the authors could license; underlying image permissions remain unresolved. | 2,598 images, 13 species, up to 17 classes per repository; web-sourced, no verified Kerala/time provenance. | CONDITIONAL |
 
-**No resource is approved for commercial reuse or model training.** The status list is not a legal opinion; ambiguous terms must be referred to the provider or qualified counsel.
+**No resource is approved for commercial reuse or model training.** These decisions are resource-specific engineering gates, not legal advice. Ambiguous terms must be referred to the provider or qualified counsel.
 
-### Separate public-portfolio permission status
+### Internal portfolio licence/terms classification
 
-The portfolio review is separate from the commercial training gate. A portfolio/research-only status never authorizes commercial deployment or model training. The only portfolio/research-only allowance currently recorded is the Open-Meteo free API under its non-commercial terms and CC-BY attribution; it is not connected or queried by this application. No source is approved for both portfolio and commercial reuse.
+**Governance boundary:** `APPROVED_PORTFOLIO_RESEARCH_ONLY` is an internal inventory assessment of apparent publisher licence/terms compatibility for a limited, non-commercial portfolio/research category. It is not project-owner authorization, source-owner permission, approval to access or acquire data, approval to conduct research, approval for ML training, or approval for public demonstration or deployment. Portfolio/demo and pilot research are separate project permission scopes; neither inherits authorization from the other. Stage 40 currently marks both **NOT AUTHORIZED**. This classification does not change any governance status or dataset acquisition status.
 
-| Resource | Portfolio status | Scope / remaining limitation |
+The portfolio classification is separate from the commercial and ML-training reviews. It describes an inventory-level assessment of publisher terms only; it does not authorize project activity. No source is approved for commercial reuse or model training.
+
+| Resource | Internal portfolio licence/terms classification | Scope / remaining limitation |
 |---|---|---|
 | data.gov.in district crop production | UNVERIFIED | Schema, Kerala rows, units, and resource terms unverified. |
 | FAOSTAT QCL | BLOCKED | Terms concerning promotion of commercial products/services conflict with this hybrid project scope. |
@@ -71,15 +88,15 @@ The portfolio review is separate from the commercial training gate. A portfolio/
 | WoSIS | UNVERIFIED | Contributor-specific rights; no selected Kerala record reviewed. |
 | Soil Health Card/lab records | UNVERIFIED | No permitted georeferenced export or record-level permission. |
 | Sentinel-2 L2A | CONDITIONAL | Verify selected product/asset terms and attribution before use. |
-| ERA5-Land | CONDITIONAL | Retain and follow terms for the selected dataset request. |
-| NASA GPM IMERG | CONDITIONAL | Verify product/version terms and third-party material. |
-| Open-Meteo free API | APPROVED_PORTFOLIO_RESEARCH_ONLY | Non-commercial portfolio/research use with CC-BY attribution only; not commercial, not connected, and not a training approval. |
+| ERA5-Land hourly | APPROVED_PORTFOLIO_RESEARCH_ONLY | Cited Copernicus terms may appear compatible with limited non-commercial portfolio display, subject to exact CDS request terms, third-party terms, C3S attribution, and the required disclaimer. This classification is not project authorization. |
+| NASA GPM IMERG Final Run V07B | APPROVED_PORTFOLIO_RESEARCH_ONLY | Cited GPM/NASA terms may appear compatible with limited non-commercial portfolio display, subject to exact asset metadata, citation, acknowledgement, and any third-party terms. This classification is not project authorization. |
+| Open-Meteo free API | APPROVED_PORTFOLIO_RESEARCH_ONLY | Cited CC BY/free-service terms describe non-commercial use subject to attribution. No API query or integration is recorded; this classification does not authorize a query, project research, or public demonstration. |
 | PlantVillage | UNVERIFIED | Mirror license does not establish upstream image-level rights. |
 | PlantDoc | UNVERIFIED | Repository license does not resolve web-scraped image rights. |
 
 These are scope-specific repository decisions based on the cited evidence, not legal advice. Re-review before public deployment if the use changes, and do not infer commercial rights from a portfolio/research status.
 
-`backend/scripts/dataset_governance.py` is the fail-closed eligibility checker used by both training entry points. It rejects non-APPROVED resources and requires complete source/license metadata, verified third-party rights, an allowlisted reviewer, a private HMAC approval signature, acquired data, verified data quality and relevance, and a matching provenance manifest with a source URL, version, timezone-aware retrieval date, license, input path, and SHA-256 digest. It rejects duplicate resource IDs, invalid URLs, missing license fields, tampered signatures, and checksum/source mismatches. No command-line override exists. `backend/scripts/review_dataset.py` records allowlisted reviews; approval requires evidence and no remaining concerns. Configure `DATASET_REVIEWER_EMAILS` and a private `DATASET_APPROVAL_HMAC_KEY` locally; neither is configured in this project.
+`backend/scripts/dataset_governance.py` is the fail-closed eligibility checker used by both training entry points. It rejects non-APPROVED resources and requires complete source/license metadata, an exact license version, a file format, verified third-party rights, an allowlisted reviewer, a private HMAC approval signature, acquired data, verified data quality and relevance, and a matching provenance manifest with a source URL, version, timezone-aware retrieval date, license, input path, and SHA-256 digest. It rejects duplicate resource IDs, invalid URLs, missing license fields, tampered signatures, and checksum/source mismatches. No command-line override exists. `backend/scripts/review_dataset.py` records allowlisted reviews; approval requires evidence and no remaining concerns. Keep `DATASET_REVIEWER_EMAILS` and `DATASET_APPROVAL_HMAC_KEY` private; this audit did not read or use either value.
 
 ### Soil and disease ground-truth requirements
 
@@ -98,7 +115,7 @@ The current generic trainers remain unsuitable for evaluation: soil uses random 
 - **Coverage/resolution:** Global maps at 250 m, with standard depth intervals 0-5, 5-15, 15-30, 30-60, 60-100, and 100-200 cm. Organic-carbon stock is provided at 0-30 cm.
 - **Properties in the live API metadata:** bulk density, CEC, coarse fragments, clay, nitrogen, organic-carbon density/stock, pH in water, sand, silt, and three water-retention properties. The response exposes mean, quantiles, and uncertainty. **Phosphorus and potassium are not listed as SoilGrids layers.**
 - **Labels/units:** These are model predictions, not new laboratory measurements. The API layer-list response does not itself include units; retain the dataset's unit/scaling metadata and verify it before converting or training. Do not treat raw raster integer encodings as physical units.
-- **License:** ISRIC documentation describes SoilGrids products as available under CC-BY. Cite the product/version and ISRIC, and retain the data-policy and disclaimer terms.
+- **License:** The official FAQ identifies SoilGrids 250 m v2.0, but the applicable product license in the linked ISRIC data-policy PDF was not text-verified in this audit. Treat rights as conditional; do not rely on the earlier CC-BY assertion until the exact policy/product terms have been retained.
 - **Limitations:** 250 m pixels do not resolve individual small fields. Map uncertainty and the source profile distribution vary geographically. Using a SoilGrids estimate of SOC as both a training target and an input feature can create circularity, especially where the target profile contributed to the map.
 - **Recommendation:** Use SoilGrids as a broad baseline/covariate and uncertainty surface, not as the supervised ground truth for AgroSense SOC, pH, or nitrogen models. It cannot supply the requested P/K labels.
 
@@ -135,7 +152,7 @@ The current generic trainers remain unsuitable for evaluation: soil uses random 
 - **Coverage/resolution/time:** Global land-monitoring mission. Sentinel-2 L1C is available globally from 2015; L2A provides atmospherically corrected surface reflectance and scene-classification (SCL) output. The MSI has 13 bands at 10 m, 20 m, and 60 m native resolutions; nominal revisit varies by latitude and constellation.
 - **Features:** NDVI = `(B08 - B04) / (B08 + B04)`. A common BSI definition is `((B11 + B04) - (B08 + B02)) / ((B11 + B04) + (B08 + B02))`. Record the exact formula. B02/B04/B08 are 10 m; B11 is 20 m, so BSI requires a documented common grid/resampling choice. The existing soil trainer's red-edge inputs can use B05/B06; its SWIR inputs can use B11/B12. Record product baseline, reflectance scaling, projection, acquisition time, and masks.
 - **Cloud/missing data:** Mask clouds, cirrus, cloud shadows, snow, and invalid pixels using SCL/quality layers. A missing valid pixel is not zero reflectance. Composite windows must follow crop calendar and avoid future imagery relative to the prediction date.
-- **License:** Sentinel data are available free, full, and open under the Sentinel Data Legal Notice. Attribute the source. Copernicus portal content other than Sentinel data has separate terms; do not apply the Sentinel license to unrelated portal assets.
+- **License:** Copernicus Data Space terms state that Sentinel data are free, full, and open under the Sentinel Data Legal Notice. The linked notice was not text-verified for version-specific wording in this audit. Attribute the source and review that notice for the selected asset. Other portal content has separate terms.
 - **Recommendation:** Start with a single pilot farm/region and a crop-season-specific L2A composite. Do not download global archives. Keep red-edge/SWIR and indices at an explicitly chosen common resolution.
 
 ## 3. Weather and precipitation
@@ -164,7 +181,7 @@ The current generic trainers remain unsuitable for evaluation: soil uses random 
 - **Access/key:** NASA Earthdata Login registration is required to download Earth science data. This is an account, not a separate paid API key. Some PPS access paths require additional registration.
 - **Coverage/time:** Multi-satellite precipitation estimates over most of Earth's surface. NASA describes a continuous record spanning the TRMM era (1998-2015) and the GPM era (2014-present). Product families include half-hourly, 3-hourly, daily, and monthly formats; the spatial grid and exact date coverage depend on the product/version.
 - **Fields/units/latency:** Precipitation rate or accumulation, depending on product. Early, Late, and Final runs trade latency against processing quality; NASA recommends Final for research where latency is not critical. Some files use scale factors, so read product metadata before conversion.
-- **License:** NASA ESDIS data are generally openly usable and CC0 unless a product is labeled otherwise; cite NASA and check product-specific restrictions/third-party content.
+- **License:** NASA ESDIS guidance says NASA-led mission data without a marked restriction are generally CC0, but it explicitly defers to product-specific restrictions and third-party rights. The exact IMERG product notice was not verified; no acquisition is approved on the basis of the general guidance alone.
 - **Recommendation:** Use as a rainfall-extreme/precipitation complement, not as a substitute for temperature, humidity, or local gauges. Start with daily aggregation and compare against a local station where possible.
 
 ## 4. Crop disease image data

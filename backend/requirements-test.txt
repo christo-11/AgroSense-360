@@ -1,4 +1,5 @@
 -r requirements.txt
+-r requirements-research.txt
 httpx==0.28.1
 pytest==8.3.4
 anyio==4.6.2.post1

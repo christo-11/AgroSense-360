@@ -2,22 +2,18 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   Activity,
   ArrowUpRight,
-  Bell,
   BookOpen,
   ChevronDown,
   CircleHelp,
   Cloud,
-  CloudSun,
   Command,
-  Download,
-  Droplets,
-  ExternalLink,
+  Database,
   Eye,
-  FileImage,
   FlaskConical,
   Gauge,
   Leaf,
   LockKeyhole,
+  LogOut,
   MapPin,
   Menu,
   MessageCircle,
@@ -34,9 +30,13 @@ import {
 } from "lucide-react";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
-import { api, ApiError, type DashboardSummary, type Farm, type PlatformStatus } from "./api";
+import { api, ApiError, type AdminSummary, type DashboardSummary, type Farm, type PlatformStatus } from "./api";
+import AdminWorkspace from "./components/AdminWorkspace";
 import FarmWorkspace from "./components/FarmWorkspace";
 import CropExplorer from "./components/CropExplorer";
+import DataIntelligenceDashboard from "./components/DataIntelligenceDashboard";
+import MarketWorkspace from "./components/MarketWorkspace";
+import ResearchWorkspace from "./components/ResearchWorkspace";
 import { PortfolioDataSources, PortfolioLanding, ProjectArchitecture } from "./components/PortfolioDemo";
 import StatusPill from "./components/StatusPill";
 
@@ -80,41 +80,35 @@ function DeferredFarmTwin({ reducedMotion }: { reducedMotion: boolean }) {
   );
 }
 
-type Module = "Overview" | "Crop catalogue" | "Field intelligence" | "Weather" | "Crop health" | "Markets" | "Reports" | "AI copilot" | "Project architecture" | "Data sources";
+type Module = "Overview" | "Crop catalogue" | "Data intelligence" | "Field intelligence" | "Crop health" | "Markets" | "AI copilot" | "Research assistant" | "Project architecture" | "Data sources" | "Admin";
 const PORTFOLIO_DEMO = import.meta.env.VITE_PUBLIC_DEMO === "true";
 
 const navigation: { name: Module; icon: typeof Activity }[] = [
   { name: "Overview", icon: Gauge },
   { name: "Crop catalogue", icon: BookOpen },
+  { name: "Data intelligence", icon: Database },
   { name: "Field intelligence", icon: FlaskConical },
-  { name: "Weather", icon: CloudSun },
   { name: "Crop health", icon: Leaf },
   { name: "Markets", icon: TrendingUp },
-  { name: "Reports", icon: Download },
   { name: "AI copilot", icon: MessageCircle },
+  { name: "Research assistant", icon: BookOpen },
 ];
 
 const portfolioNavigation: { name: Module; icon: typeof Activity }[] = [
   { name: "Overview", icon: Gauge },
   { name: "Crop catalogue", icon: BookOpen },
+  { name: "Data intelligence", icon: Database },
   { name: "Project architecture", icon: Command },
   { name: "Data sources", icon: ShieldCheck },
 ];
 
-const moduleInfo: Record<Exclude<Module, "Overview" | "Crop catalogue" | "Project architecture" | "Data sources">, { title: string; description: string; icon: typeof Activity; source: string; statusKey: string }> = {
+const moduleInfo: Record<Exclude<Module, "Overview" | "Crop catalogue" | "Data intelligence" | "Research assistant" | "Project architecture" | "Data sources" | "Admin">, { title: string; description: string; icon: typeof Activity; source: string; statusKey: string }> = {
   "Field intelligence": {
     title: "Satellite soil intelligence",
     description: "Field-level SOC, pH and NPK insights require connected satellite imagery and a validated model.",
     icon: FlaskConical,
     source: "Sentinel-2 · SoilGrids",
     statusKey: "sentinel_2",
-  },
-  Weather: {
-    title: "Hyperlocal weather",
-    description: "Local forecasts appear after a weather provider and a farm location are configured.",
-    icon: CloudSun,
-    source: "NASA GPM · ERA5-Land",
-    statusKey: "weather",
   },
   "Crop health": {
     title: "Crop health & disease",
@@ -124,18 +118,11 @@ const moduleInfo: Record<Exclude<Module, "Overview" | "Crop catalogue" | "Projec
     statusKey: "disease_model",
   },
   Markets: {
-    title: "Market intelligence",
-    description: "Verified mandi prices and recommendations appear when the market data feed is connected.",
+    title: "Daily market prices",
+    description: "Check source-reported mandi prices by crop and Kerala district.",
     icon: TrendingUp,
     source: "AGMARKNET",
     statusKey: "agmarknet",
-  },
-  Reports: {
-    title: "Farm reports",
-    description: "Reports are generated from your connected farm records and verified observations.",
-    icon: Download,
-    source: "Farm records",
-    statusKey: "soilgrids",
   },
   "AI copilot": {
     title: "Agriculture copilot",
@@ -146,15 +133,16 @@ const moduleInfo: Record<Exclude<Module, "Overview" | "Crop catalogue" | "Projec
   },
 };
 
-function MetricCard({ title, icon: Icon, detail }: { title: string; icon: typeof Activity; detail: string }) {
+function MetricCard({ title, icon: Icon, detail, value }: { title: string; icon: typeof Activity; detail: string; value: number | null }) {
   return (
     <article className="metric-card glass-card">
       <div className="metric-heading">
         <span className="metric-icon"><Icon size={17} /></span>
         <span>{title}</span>
-        <span className="metric-menu">···</span>
       </div>
-      <div className="metric-value unavailable-value">— <span>Unavailable</span></div>
+      <div className={`metric-value ${value === null ? "unavailable-value" : ""}`}>
+        {value === null ? <>— <span>Unavailable</span></> : <>{value}<span>{value === 1 ? "record" : "records"}</span></>}
+      </div>
       <div className="metric-footnote">{detail}</div>
     </article>
   );
@@ -184,31 +172,48 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
   );
 }
 
+function authFailureMessage(error: unknown) {
+  if (error instanceof ApiError) return error.message;
+  return "Could not connect to AgroSense. Check the API connection and try again.";
+}
+
 function App() {
   const [active, setActive] = useState<Module>("Overview");
   const [darkMode, setDarkMode] = useState(true);
   const [status, setStatus] = useState<PlatformStatus | null>(null);
   const [farms, setFarms] = useState<Farm[]>([]);
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
+  const [adminSummary, setAdminSummary] = useState<AdminSummary | null>(null);
+  const [adminLoadError, setAdminLoadError] = useState("");
   const [loading, setLoading] = useState(false);
   const [statusError, setStatusError] = useState("");
   const [farmLoadError, setFarmLoadError] = useState("");
   const [summaryError, setSummaryError] = useState("");
-  const [modal, setModal] = useState<"auth" | "sources" | null>(null);
+  const [modal, setModal] = useState<"sources" | null>(null);
   const [authMode, setAuthMode] = useState<"signin" | "register">("signin");
-  const [authenticated, setAuthenticated] = useState(!PORTFOLIO_DEMO && Boolean(sessionStorage.getItem("agrosense_token")));
+  const [authenticated, setAuthenticated] = useState(false);
+  const [sessionChecking, setSessionChecking] = useState(!PORTFOLIO_DEMO && Boolean(sessionStorage.getItem("agrosense_token")));
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [notice, setNotice] = useState("");
+  const [authError, setAuthError] = useState("");
+  const [sessionError, setSessionError] = useState("");
+  const [authSubmitting, setAuthSubmitting] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [query, setQuery] = useState("");
+  const [passwordChangeRequired, setPasswordChangeRequired] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [newPasswordConfirm, setNewPasswordConfirm] = useState("");
   const [reducedMotion, setReducedMotion] = useState(false);
 
   const refresh = useCallback(async () => {
+    const storedToken = sessionStorage.getItem("agrosense_token");
     if (PORTFOLIO_DEMO) {
       api.signOut();
       setAuthenticated(false);
       setFarms([]);
       setSummary(null);
+      setAdminSummary(null);
+      setAdminLoadError("");
       setFarmLoadError("");
       setSummaryError("");
     }
@@ -222,31 +227,51 @@ function App() {
         setStatusError(error instanceof Error ? error.message : "Could not reach the backend.");
       }
 
-      if (PORTFOLIO_DEMO || !sessionStorage.getItem("agrosense_token")) {
+      if (PORTFOLIO_DEMO || !storedToken) {
         setAuthenticated(false);
         setFarms([]);
         setSummary(null);
+        setAdminSummary(null);
+        setAdminLoadError("");
         setFarmLoadError("");
         setSummaryError("");
+        setSessionChecking(false);
         return;
       }
 
-      setAuthenticated(true);
+      let loadedFarms: Farm[];
       try {
-        setFarms(await api.farms());
-        setFarmLoadError("");
+        loadedFarms = await api.farms();
       } catch (error) {
+        if (sessionStorage.getItem("agrosense_token") !== storedToken) return;
         setFarmLoadError(error instanceof Error ? error.message : "Could not load farms.");
+        if (error instanceof ApiError && error.status === 403 && error.message === "Change your temporary password before using AgroSense.") {
+          setAuthenticated(false);
+          setPasswordChangeRequired(true);
+          setAuthError("");
+          setSessionError("");
+          return;
+        }
         if (error instanceof ApiError && error.status === 401) {
           api.signOut();
           setAuthenticated(false);
           setFarms([]);
           setSummary(null);
-          setNotice("Your session expired. Sign in again.");
+          setAuthError("Your session expired. Sign in again.");
+        } else {
+          setAuthenticated(false);
+          setSessionError("Could not verify your saved session. Check the API connection and try again.");
         }
+        return;
       }
 
-      if (!sessionStorage.getItem("agrosense_token")) return;
+      if (sessionStorage.getItem("agrosense_token") !== storedToken) return;
+      setAuthenticated(true);
+      setAuthError("");
+      setSessionError("");
+      setFarms(loadedFarms);
+      setFarmLoadError("");
+
       try {
         setSummary(await api.dashboardSummary());
         setSummaryError("");
@@ -254,8 +279,18 @@ function App() {
         setSummary(null);
         setSummaryError(error instanceof Error ? error.message : "Could not load farm totals.");
       }
+      setAdminSummary(null);
+      setAdminLoadError("");
+      try {
+        setAdminSummary(await api.adminSummary());
+      } catch (error) {
+        if (!(error instanceof ApiError && error.status === 403)) {
+          setAdminLoadError(error instanceof Error ? error.message : "Could not load the admin dashboard.");
+        }
+      }
     } finally {
       setLoading(false);
+      setSessionChecking(false);
     }
   }, []);
 
@@ -274,48 +309,148 @@ function App() {
 
   function showFarmWorkspace() {
     setActive("Overview");
+    setMobileNavOpen(false);
     window.setTimeout(() => {
       document.getElementById("farm-workspace")?.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth" });
     }, 0);
   }
 
+  function openCatalogueSearch() {
+    setActive("Crop catalogue");
+    setMobileNavOpen(false);
+    window.setTimeout(() => document.getElementById("crop-search")?.focus(), 0);
+  }
+
   async function submitAuth(event: FormEvent) {
     event.preventDefault();
+    setAuthError("");
+    setAuthSubmitting(true);
     try {
       if (authMode === "register") await api.register(email, password);
-      await api.signIn(email, password);
+      if (await api.signIn(email, password)) {
+        setPasswordChangeRequired(true);
+        setPassword("");
+        return;
+      }
+      setPasswordChangeRequired(false);
+      setAuthMode("signin");
       setAuthenticated(true);
-      setModal(null);
+      setSessionChecking(true);
+      setActive("Overview");
       await refresh();
       setNotice("Signed in successfully.");
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : "Authentication failed.");
+      setAuthError(authFailureMessage(error));
+    } finally {
+      setAuthSubmitting(false);
+    }
+  }
+
+  async function submitNewPassword(event: FormEvent) {
+    event.preventDefault();
+    if (newPassword !== newPasswordConfirm) {
+      setAuthError("The new passwords do not match.");
+      return;
+    }
+    setAuthError("");
+    setAuthSubmitting(true);
+    try {
+      await api.changePassword(newPassword);
+      setPasswordChangeRequired(false);
+      setNewPassword("");
+      setNewPasswordConfirm("");
+      setAuthenticated(true);
+      setSessionChecking(true);
+      setActive("Overview");
+      await refresh();
+      setNotice("Password updated. You are signed in.");
+    } catch (error) {
+      setAuthError(authFailureMessage(error));
+    } finally {
+      setAuthSubmitting(false);
     }
   }
 
   function signOut() {
     api.signOut();
+    setMobileNavOpen(false);
     setAuthenticated(false);
+    setSessionChecking(false);
     setFarms([]);
     setSummary(null);
+    setAdminSummary(null);
+    setAdminLoadError("");
     setFarmLoadError("");
     setSummaryError("");
-    setNotice("Signed out.");
+    setPasswordChangeRequired(false);
+    setAuthMode("signin");
+    setAuthError("");
+    setSessionError("");
+    setEmail("");
+    setPassword("");
+    setNewPassword("");
+    setNewPasswordConfirm("");
+    setActive("Overview");
   }
 
-  const module = active === "Overview" || active === "Crop catalogue" || active === "Project architecture" || active === "Data sources"
+  const module = active === "Overview" || active === "Crop catalogue" || active === "Data intelligence" || active === "Research assistant" || active === "Project architecture" || active === "Data sources" || active === "Admin"
     ? null
     : moduleInfo[active];
-  const visibleNavigation = PORTFOLIO_DEMO ? portfolioNavigation : navigation;
+  const visibleNavigation = PORTFOLIO_DEMO
+    ? portfolioNavigation
+    : adminSummary
+      ? [...navigation, { name: "Admin" as const, icon: ShieldCheck }]
+      : navigation;
+
+  if (!PORTFOLIO_DEMO && (sessionChecking || !authenticated)) {
+    return (
+      <div className={`app-shell auth-screen ${darkMode ? "theme-dark" : "theme-light"}`}>
+        <main className="auth-card glass-card">
+          <div className="auth-brand">
+            <span className="brand-mark"><Sprout size={21} strokeWidth={2.2} /></span>
+            <span className="brand-name">AgroSense<span>360</span></span>
+          </div>
+          {sessionChecking ? (
+            <p className="auth-loading" role="status">Checking your saved session…</p>
+          ) : (
+            <>
+              <div className="auth-page-heading">
+                <span className="eyebrow">FARMER WORKSPACE</span>
+                <h1>{passwordChangeRequired ? "Set a new password" : authMode === "signin" ? "Welcome to AgroSense" : "Create your farmer account"}</h1>
+                <p>{passwordChangeRequired ? "Choose a new password before accessing your farm data." : "Sign in to securely view and manage your farms and plots."}</p>
+              </div>
+              {passwordChangeRequired ? (
+                <form className="dialog-form auth-page-form" onSubmit={(event) => void submitNewPassword(event)}>
+                  <label>New password<input type="password" autoComplete="new-password" minLength={10} required value={newPassword} onChange={(event) => setNewPassword(event.target.value)} placeholder="At least 10 characters" /></label>
+                  <label>Confirm new password<input type="password" autoComplete="new-password" minLength={10} required value={newPasswordConfirm} onChange={(event) => setNewPasswordConfirm(event.target.value)} placeholder="Enter the new password again" /></label>
+                  {authError && <p className="auth-error" role="alert">{authError}</p>}
+                  <button className="button button-primary auth-submit" type="submit" disabled={authSubmitting}>{authSubmitting ? "Updating password…" : "Update password"}</button>
+                </form>
+              ) : (
+                <form className="dialog-form auth-page-form" onSubmit={(event) => void submitAuth(event)}>
+                  <label>Email address<input type="email" autoComplete="email" required value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" /></label>
+                  <label>Password<input type="password" autoComplete={authMode === "signin" ? "current-password" : "new-password"} minLength={10} required value={password} onChange={(event) => setPassword(event.target.value)} placeholder="At least 10 characters" /></label>
+                  {(authError || sessionError) && <p className="auth-error" role="alert">{authError || sessionError}</p>}
+                  {sessionError && <button className="text-link auth-retry" type="button" onClick={() => { setSessionError(""); setSessionChecking(true); void refresh(); }} disabled={loading}>Retry saved session</button>}
+                  <button className="button button-primary auth-submit" type="submit" disabled={authSubmitting}>{authSubmitting ? "Please wait…" : authMode === "signin" ? "Sign in" : "Create account"}</button>
+                  <button className="text-link auth-switch" type="button" onClick={() => { setAuthMode(authMode === "signin" ? "register" : "signin"); setAuthError(""); setPassword(""); }}>{authMode === "signin" ? "New here? Create an account" : "Already have an account? Sign in"}</button>
+                </form>
+              )}
+            </>
+          )}
+        </main>
+      </div>
+    );
+  }
 
   return (
-    <div className={`app-shell ${darkMode ? "theme-dark" : "theme-light"}`}>
+    <div className={`app-shell ${darkMode ? "theme-dark" : "theme-light"} ${mobileNavOpen ? "mobile-nav-open" : ""}`}>
       <aside className="sidebar">
-        <a className="brand" href="#" onClick={(event) => { event.preventDefault(); setActive("Overview"); }}>
+        <a className="brand" href="#" onClick={(event) => { event.preventDefault(); setActive("Overview"); setMobileNavOpen(false); }}>
           <span className="brand-mark"><Sprout size={21} strokeWidth={2.2} /></span>
           <span className="brand-name">AgroSense<span>360</span></span>
         </a>
-        <div className="workspace-label">{PORTFOLIO_DEMO ? "PUBLIC DEMO" : "WORKSPACE"}</div>
+        <div className="workspace-label">{PORTFOLIO_DEMO ? "LOCAL PREVIEW" : "WORKSPACE"}</div>
         {PORTFOLIO_DEMO ? (
           <div className="farm-picker demo-workspace">
             <span className="farm-avatar"><MapPin size={16} /></span>
@@ -329,9 +464,9 @@ function App() {
           </button>
         )}
         <div className="nav-section-label">{PORTFOLIO_DEMO ? "PROJECT" : "FARM INTELLIGENCE"}</div>
-        <nav className="main-nav" aria-label="Main navigation">
+        <nav id="main-nav" className="main-nav" aria-label="Main navigation">
           {visibleNavigation.map(({ name, icon: Icon }) => (
-            <button key={name} aria-label={name} aria-current={active === name ? "page" : undefined} onClick={() => setActive(name)} className={`nav-item ${active === name ? "active" : ""}`}>
+            <button key={name} aria-label={name} aria-current={active === name ? "page" : undefined} onClick={() => { setActive(name); setMobileNavOpen(false); }} className={`nav-item ${active === name ? "active" : ""}`}>
               <Icon size={17} strokeWidth={1.8} /><span>{name}</span>
             </button>
           ))}
@@ -339,21 +474,20 @@ function App() {
         <div className="sidebar-spacer" />
         <div className="sidebar-tip">
           <div className="tip-icon"><ShieldCheck size={17} /></div>
-          <strong>{PORTFOLIO_DEMO ? "Read-only by design" : "Your data, clearly labeled"}</strong>
-          <p>{PORTFOLIO_DEMO ? "No public farmer accounts or private farm boundaries." : "Unverified or disconnected insights are never shown as farm results."}</p>
+          <strong>{PORTFOLIO_DEMO ? "Technical preview only" : "Your data, clearly labeled"}</strong>
+          <p>{PORTFOLIO_DEMO ? "Read-only capability does not authorize public use or data release." : "Unverified or disconnected insights are never shown as farm results."}</p>
           <button onClick={() => PORTFOLIO_DEMO ? setActive("Data sources") : setModal("sources")}>View data status <ArrowUpRight size={13} /></button>
         </div>
-        {!PORTFOLIO_DEMO && <button className="nav-item settings-link" onClick={() => setModal("sources")}><Settings2 size={17} /><span>Data connections</span></button>}
+        {!PORTFOLIO_DEMO && <button className="nav-item settings-link" onClick={() => { setMobileNavOpen(false); setModal("sources"); }}><Settings2 size={17} /><span>Data connections</span></button>}
         {PORTFOLIO_DEMO ? (
           <div className="sidebar-profile">
             <div className="profile-avatar"><LockKeyhole size={15} /></div>
-            <div className="profile-copy"><strong>Read-only demo</strong><small>Farmer data disabled</small></div>
+            <div className="profile-copy"><strong>Local preview</strong><small>Public use not authorized</small></div>
           </div>
         ) : (
           <div className="sidebar-profile">
             <div className="profile-avatar">{authenticated ? email.slice(0, 1).toUpperCase() : <CircleHelp size={17} />}</div>
             <div className="profile-copy"><strong>{authenticated ? email : "Guest workspace"}</strong><small>{authenticated ? "Farm account" : "Sign in to save farms"}</small></div>
-            {authenticated ? <button className="profile-action" onClick={signOut} aria-label="Sign out"><ExternalLink size={15} /></button> : <button className="profile-action" onClick={() => setModal("auth")} aria-label="Sign in"><ArrowUpRight size={15} /></button>}
           </div>
         )}
       </aside>
@@ -363,30 +497,34 @@ function App() {
           <div className="breadcrumb"><span>Workspace</span><span className="crumb-slash">/</span><strong>{active}</strong></div>
           <div className="topbar-actions">
             <div className="location-chip"><MapPin size={14} /><span>{PORTFOLIO_DEMO ? "Kerala, India" : farms[0]?.location ?? "Location not set"}</span>{!PORTFOLIO_DEMO && <ChevronDown size={13} />}</div>
-            {!PORTFOLIO_DEMO && <button className="icon-button top-search" aria-label="Search" onClick={() => setNotice("Search is available when farm records are connected.")}><Search size={17} /></button>}
+            {!PORTFOLIO_DEMO && <button className="icon-button top-search" aria-label="Search crop catalogue" onClick={openCatalogueSearch}><Search size={17} /></button>}
             <button className="icon-button" aria-label="Toggle light and dark mode" onClick={() => setDarkMode((value) => !value)}>{darkMode ? <Sun size={17} /> : <Moon size={17} />}</button>
-            {!PORTFOLIO_DEMO && <button className="icon-button notification-button" aria-label="Notifications" onClick={() => setNotice("No verified alerts are available yet.")}><Bell size={17} /><i /></button>}
-            {!PORTFOLIO_DEMO && <button className="button button-primary top-add" onClick={() => authenticated ? showFarmWorkspace() : setModal("auth")}><Plus size={16} /> Add farm</button>}
-            <button className="icon-button mobile-menu" aria-label="Open menu" onClick={() => setNotice("Choose a module from the navigation menu.")}><Menu size={19} /></button>
+            {!PORTFOLIO_DEMO && authenticated && <button className="button button-secondary top-logout" onClick={signOut}><LogOut size={15} /><span>Log out</span></button>}
+            {!PORTFOLIO_DEMO && <button className="button button-primary top-add" onClick={showFarmWorkspace}><Plus size={16} /> Add plot</button>}
+            <button className="icon-button mobile-menu" aria-label={mobileNavOpen ? "Close menu" : "Open menu"} aria-expanded={mobileNavOpen} aria-controls="main-nav" onClick={() => setMobileNavOpen((open) => !open)}>{mobileNavOpen ? <X size={19} /> : <Menu size={19} />}</button>
           </div>
         </header>
 
         <div className="page-content">
           <div className="page-heading">
             <div>
-              <div className="eyebrow"><span className="live-dot" />{PORTFOLIO_DEMO ? "AGROSENSE-360 · PUBLIC PORTFOLIO" : "FARM OPERATIONS"}<span className="heading-date">· {PORTFOLIO_DEMO ? "READ ONLY" : "DATA STATUS"}</span></div>
+              <div className="eyebrow"><span className="live-dot" />{PORTFOLIO_DEMO ? "AGROSENSE-360 · PROPOSED LOCAL PREVIEW" : "FARM OPERATIONS"}<span className="heading-date">· {PORTFOLIO_DEMO ? "NOT AUTHORIZED FOR PUBLIC USE" : "DATA STATUS"}</span></div>
               <h1>{module?.title ?? (
                 active === "Crop catalogue" ? "Kerala crop catalogue"
+                  : active === "Data intelligence" ? "Agricultural data intelligence"
                   : active === "Project architecture" ? "Project architecture"
                     : active === "Data sources" ? "Data sources & attribution"
+                      : active === "Admin" ? "Admin dashboard"
                       : PORTFOLIO_DEMO ? "Transparent agriculture intelligence for Kerala"
                         : "Good morning, farmer"
               )}<span className="heading-leaf">✳</span></h1>
               <p>{module?.description ?? (
                 active === "Crop catalogue" ? "Explore districts, crops and agricultural profiles with clear source and verification status."
+                  : active === "Data intelligence" ? "Inspect registered sources, data quality, catalogue coverage and training eligibility from verified project metadata."
                   : active === "Project architecture" ? "How the current prototype separates public catalogue data from private farm records."
                     : active === "Data sources" ? "Resource-level licensing, provenance and readiness status."
-                      : PORTFOLIO_DEMO ? "A read-only portfolio demonstration. No public registration, real farmer records, or model predictions."
+                      : active === "Admin" ? "Review account totals, source connections and evidence verification status."
+                      : PORTFOLIO_DEMO ? "A proposed local technical preview. Public demonstration, data distribution, and deployment are not authorized."
                         : "A clear view of your land, conditions and what needs attention."
               )}</p>
             </div>
@@ -398,10 +536,31 @@ function App() {
 
           {active === "Crop catalogue" ? (
             <CropExplorer />
+          ) : active === "Data intelligence" ? (
+            <DataIntelligenceDashboard />
           ) : active === "Project architecture" ? (
             <ProjectArchitecture />
           ) : active === "Data sources" ? (
             <PortfolioDataSources />
+          ) : active === "Research assistant" ? (
+            <ResearchWorkspace authenticated={authenticated} />
+          ) : active === "Markets" ? (
+            <section className="module-page glass-card">
+              <div className="module-header">
+                <div className="module-icon"><TrendingUp size={20} /></div>
+                <div><h2>Daily market prices</h2><p>AGMARKNET via data.gov.in · market-reported values, not real-time quotes</p></div>
+                <StatusPill item={status?.integrations.agmarknet} />
+              </div>
+              <MarketWorkspace authenticated={authenticated} onRequestSignIn={signOut} />
+            </section>
+          ) : active === "Admin" ? (
+            <AdminWorkspace
+              summary={adminSummary}
+              status={status}
+              error={adminLoadError}
+              onOpenCatalogue={() => setActive("Crop catalogue")}
+              onOpenDataIntelligence={() => setActive("Data intelligence")}
+            />
           ) : module ? (
             <section className="module-page glass-card">
               <div className="module-header">
@@ -410,19 +569,12 @@ function App() {
                 <StatusPill item={status?.integrations[module.statusKey] ?? status?.models[module.statusKey]} />
               </div>
               {active === "Crop health" && (
-                <label className="upload-zone">
-                  <input type="file" accept="image/*" onChange={() => setNotice("Image inference is unavailable until a validated model is deployed.")} />
-                  <FileImage size={24} /><strong>Select a crop image</strong><span>Image analysis stays unavailable until a validated model is deployed.</span>
-                </label>
+                <div className="module-note" role="note"><LockKeyhole size={15} /><span>Image upload is disabled until a validated model and authorized image data are available.</span></div>
               )}
               {active === "AI copilot" && (
-                <form className="copilot-input" onSubmit={(event) => { event.preventDefault(); setNotice("Copilot is unavailable until its grounded knowledge service is configured."); }}>
-                  <MessageCircle size={18} />
-                  <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Ask a question about your farm…" aria-label="Ask the agriculture copilot" />
-                  <button className="button button-primary" type="submit" disabled={!query.trim()}>Ask copilot</button>
-                </form>
+                <div className="module-note" role="note"><LockKeyhole size={15} /><span>Copilot questions are disabled until its grounded knowledge service and verified sources are configured.</span></div>
               )}
-              <EmptyChart label={active === "Weather" ? "weather observations" : active === "Markets" ? "market prices" : active === "Crop health" ? "crop health results" : "farm insights"} />
+              <EmptyChart label={active === "Crop health" ? "crop health results" : "farm insights"} />
               <div className="module-note"><LockKeyhole size={15} /><span>Results are withheld until real data and required integrations are available. No demo predictions are used.</span></div>
             </section>
           ) : PORTFOLIO_DEMO ? (
@@ -440,7 +592,7 @@ function App() {
                 <div>
                   <strong>{status?.api === "online" && status.database === "connected" ? "Workspace connected" : "Workspace connection needs attention"}</strong>
                   <span>{statusError || summaryError || (status?.api === "online"
-                    ? `${summary ? `${summary.farm_count} farms · ${summary.plot_count} plots. ` : ""}Add a farm and connect a verified source to see agricultural insights.`
+                    ? `${summary ? `${summary.farm_count} farms · ${summary.plot_count} plots. ` : ""}Add a plot to see its saved crop, location and available weather.`
                     : "Backend not detected. Start the API to connect your farm and data sources.")}</span>
                 </div>
                 <button onClick={() => setModal("sources")}>Check connections <ArrowUpRight size={14} /></button>
@@ -453,14 +605,13 @@ function App() {
                 loadError={farmLoadError}
                 onRefresh={refresh}
                 onNotice={setNotice}
-                onRequestSignIn={() => setModal("auth")}
+                onRequestSignIn={signOut}
               />
 
               <section className="metric-grid" aria-label="Farm metrics">
-                <MetricCard title="Soil organic carbon" icon={FlaskConical} detail="Connect satellite + soil model" />
-                <MetricCard title="Soil moisture" icon={Droplets} detail="Connect verified field or satellite data" />
-                <MetricCard title="Crop health" icon={Leaf} detail="Requires imagery + validated model" />
-                <MetricCard title="Yield outlook" icon={TrendingUp} detail="Requires farm history + validated model" />
+                <MetricCard title="Saved farms" icon={Sprout} value={authenticated ? summary?.farm_count ?? null : null} detail={authenticated ? summary ? "Private farm records in your account." : loading ? "Loading your farm summary…" : summaryError || "Farm count unavailable." : "Sign in to load your private farm records."} />
+                <MetricCard title="Recorded plots" icon={MapPin} value={authenticated ? summary?.plot_count ?? null : null} detail={authenticated ? summary ? "Plots saved in your account." : loading ? "Loading your plot summary…" : summaryError || "Plot count unavailable." : "Sign in to load your private plot records."} />
+                <MetricCard title="Validated crop predictions" icon={TrendingUp} value={null} detail={status?.models.soil_model?.detail ?? "No validated crop prediction model is deployed."} />
               </section>
 
               <div className="dashboard-grid">
@@ -473,46 +624,29 @@ function App() {
                   <div className="twin-legend"><span><i className="legend-green" /> Plot boundary</span><span><i className="legend-yellow" /> Farm marker</span><span className="legend-unavailable">Soil & crop layers unavailable</span></div>
                 </section>
 
-                <section className="panel glass-card weather-panel">
-                  <div className="panel-heading"><div><h2>Local conditions</h2><p>{farms[0]?.location ?? "Add a farm location for local data"}</p></div><span className="weather-icon"><CloudSun size={21} /></span></div>
-                  <div className="weather-empty"><Cloud size={28} /><strong>Forecast unavailable</strong><span>Connect a weather data source and set a farm location to view forecasts.</span></div>
-                  <div className="weather-days">
-                    {["Today", "Tomorrow", "Day 3"].map((day) => <div key={day}><span>{day}</span><CloudSun size={16} /><b>—</b></div>)}
-                  </div>
-                  <button className="text-link" onClick={() => setActive("Weather")}>Open weather module <ArrowUpRight size={14} /></button>
-                </section>
               </div>
 
               <div className="dashboard-grid lower-grid">
                 <section className="panel glass-card trend-panel">
-                  <div className="panel-heading"><div><h2>Field activity</h2><p>Verified observations across your fields</p></div><button className="period-button" onClick={() => setNotice("Date filters become available when field observations are connected.")}>Last 30 days <ChevronDown size={13} /></button></div>
+                  <div className="panel-heading"><div><h2>Field activity</h2><p>Verified observations across your fields</p></div><span className="period-button">No observation series</span></div>
                   <EmptyChart label="field activity" />
                 </section>
                 <section className="panel glass-card insights-panel">
-                  <div className="panel-heading"><div><h2>Farm signals</h2><p>Evidence-backed actions and alerts</p></div><span className="signal-count">0</span></div>
+                  <div className="panel-heading"><div><h2>Farm signals</h2><p>Evidence-backed actions and alerts</p></div><span className="signal-count">—</span></div>
                   <div className="signals-empty"><span className="signals-icon"><Activity size={17} /></span><strong>No verified signals</strong><p>Signals will appear here when connected sources return validated observations.</p></div>
-                  <button className="text-link" onClick={() => setActive("Reports")}>View farm reports <ArrowUpRight size={14} /></button>
+                  <button className="text-link" onClick={() => setActive("Data intelligence")}>View data status <ArrowUpRight size={14} /></button>
                 </section>
               </div>
             </>
           )}
 
-          <footer className="page-footer"><span>AgroSense-360 <span className="footer-separator">·</span> {PORTFOLIO_DEMO ? "Portfolio demonstration · Read only · not production-ready." : "Decision support, not a substitute for local agronomic advice."}</span><button onClick={() => PORTFOLIO_DEMO ? setActive("Data sources") : setModal("sources")}><ShieldCheck size={13} /> Data transparency</button></footer>
+          <footer className="page-footer"><span>AgroSense-360 <span className="footer-separator">·</span> {PORTFOLIO_DEMO ? "Proposed local technical preview · public use not authorized." : "Decision support, not a substitute for local agronomic advice."}</span><button onClick={() => PORTFOLIO_DEMO ? setActive("Data sources") : setModal("sources")}><ShieldCheck size={13} /> Data transparency</button></footer>
         </div>
       </main>
 
+      {mobileNavOpen && <button className="mobile-nav-backdrop" type="button" aria-label="Close navigation" onClick={() => setMobileNavOpen(false)} />}
+
       <AnimatePresence>
-        {!PORTFOLIO_DEMO && modal === "auth" && (
-          <Modal title={authMode === "signin" ? "Welcome back" : "Create your account"} onClose={() => setModal(null)}>
-            <form className="dialog-form" onSubmit={(event) => void submitAuth(event)}>
-              <p className="form-description">Your farm data is private to your account.</p>
-              <label>Email address<input type="email" autoComplete="email" required value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" /></label>
-              <label>Password<input type="password" autoComplete={authMode === "signin" ? "current-password" : "new-password"} minLength={10} required value={password} onChange={(event) => setPassword(event.target.value)} placeholder="At least 10 characters" /></label>
-              <button className="button button-primary dialog-submit" type="submit">{authMode === "signin" ? "Sign in" : "Create account"}</button>
-              <button className="text-link auth-switch" type="button" onClick={() => setAuthMode(authMode === "signin" ? "register" : "signin")}>{authMode === "signin" ? "New here? Create an account" : "Already have an account? Sign in"}</button>
-            </form>
-          </Modal>
-        )}
         {modal === "sources" && (
           <Modal title="Data connections" onClose={() => setModal(null)}>
             <p className="form-description">Only configured providers and deployed models can supply results. Unavailable integrations are intentionally not simulated.</p>

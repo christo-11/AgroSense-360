@@ -1,12 +1,14 @@
 {
-  "schema_version": 2,
+  "schema_version": 4,
   "checked_at": "2026-11-19",
   "project_status": {
-    "raw_dataset_directory_present": false,
+    "raw_dataset_directory_present": true,
     "processed_dataset_directory_present": false,
     "model_artifacts_found": 0,
     "model_registry_present": false,
     "inference_available": false,
+    "stage_12_dataset_audit": "complete_no_source_approved_no_dataset_acquired",
+    "stage_12_acquisition_status": "no_verified_acquirable_source",
     "training_entrypoints": [
       {
         "path": "backend/scripts/train_soil_model.py",
@@ -32,133 +34,145 @@
     "india_district_season_crop_production": {
       "resource_url": "https://www.data.gov.in/resource/district-wise-season-wise-crop-production-statistics-1997",
       "download_api_url": null,
-      "approval_status": "UNVERIFIED",
+      "approval_status": "CONDITIONAL",
       "commercial_use_status": "UNKNOWN",
-      "license_name": "Government Open Data License - India may apply; resource-specific applicability unverified",
-      "license_url": "https://data.gov.in/Godl",
-      "attribution_obligations": "Resource-specific attribution requirements unverified",
+      "license_name": "Resource-level licence not verified; official resource page returned HTTP 403",
+      "license_url": null,
+      "attribution_obligations": "Not verified for this exact resource; do not redistribute until its resource-level terms are confirmed.",
       "share_alike_obligations": "Resource-specific terms unverified",
-      "redistribution_restrictions": "Resource-specific terms unverified",
-      "third_party_rights": "UNKNOWN",
+      "redistribution_restrictions": "Not verified; do not acquire or redistribute until the exact resource licence is inspected.",
+      "third_party_rights": "NOT_VERIFIED",
       "kerala_coverage": "Candidate district resource; Kerala rows not verified",
       "district_level_availability": "UNKNOWN",
       "training_data_quality_status": "NOT_ASSESSED",
       "training_relevance_status": "NOT_ASSESSED",
-      "authentication_requirements": "data.gov.in API key; not configured",
-      "access_status": "Catalog HTTP 403; prior unauthenticated API request HTTP 400",
+      "authentication_requirements": "data.gov.in API key required for API access; no credentials were requested or used.",
+      "access_status": "Official resource page returned HTTP 403 during this audit; data.gov.in API access normally requires a resource ID and API key; no key was used.",
       "verification_date": "2026-11-19",
       "evidence_urls": [
         "https://www.data.gov.in/resource/district-wise-season-wise-crop-production-statistics-1997",
-        "https://data.gov.in/Godl"
+        "https://www.data.gov.in/apis"
       ],
       "remaining_concerns": [
-        "Resource-specific license, API schema, Kerala coverage, units, and update status are unverified"
+        "Exact resource licence, schema, units, Kerala coverage, and version are unverified.",
+        "API access requires an authorized key; do not request or embed one."
       ],
       "reviewed_by": null,
-      "reviewed_at": null
+      "reviewed_at": null,
+      "license_version": "NOT_VERIFIED",
+      "review_signature": null
     },
     "faostat_qcl": {
       "resource_url": "https://www.fao.org/faostat/en/#data/QCL",
       "download_api_url": "https://bulks-faostat.fao.org/production/QCL.zip",
       "approval_status": "BLOCKED",
       "commercial_use_status": "PROHIBITED",
-      "license_name": "CC-BY-4.0 with additional FAO statistical database terms and third-party exceptions",
+      "license_name": "Creative Commons Attribution 4.0 International (CC BY 4.0) plus FAO Statistical Database Terms of Use",
       "license_url": "https://www.fao.org/contact-us/terms/db-terms-of-use/en",
-      "attribution_obligations": "FAO citation and CC-BY-4.0 attribution required",
+      "attribution_obligations": "FAO citation must include last-updated year, database/dataset name, access date, URL, and CC-BY-4.0; do not imply FAO endorsement.",
       "share_alike_obligations": "No share-alike identified in the general FAO terms; verify item metadata",
-      "redistribution_restrictions": "Additional terms prohibit use in conjunction with promoting a commercial enterprise, product, or service; third-party data may have different terms",
-      "third_party_rights": "THIRD_PARTY_EXCEPTIONS",
+      "redistribution_restrictions": "Additional FAO terms prohibit use in conjunction with promoting a commercial enterprise, product, or service; third-party data may carry separate restrictions.",
+      "third_party_rights": "Dataset metadata must be checked for third-party exceptions; not cleared for this project.",
       "kerala_coverage": "Country-level aggregates only; not Kerala district-level",
       "district_level_availability": "NO",
       "training_data_quality_status": "NOT_ASSESSED",
       "training_relevance_status": "NOT_RELEVANT_TO_DISTRICT_LEVEL_TRAINING",
-      "authentication_requirements": "No key documented for public bulk download",
-      "access_status": "QCL page and terms reachable; bulk ZIP HEAD returned HTTP 403",
+      "authentication_requirements": "No API key is required for the portal/bulk interface; availability of the selected bulk archive was not confirmed.",
+      "access_status": "Official QCL page and database terms are reachable; the previous official bulk ZIP check returned HTTP 403; no archive acquired.",
       "verification_date": "2026-11-19",
       "evidence_urls": [
         "https://www.fao.org/faostat/en/#data/QCL",
-        "https://www.fao.org/contact-us/terms/db-terms-of-use/en"
+        "https://www.fao.org/contact-us/terms/db-terms-of-use/en",
+        "https://creativecommons.org/licenses/by/4.0/"
       ],
       "remaining_concerns": [
-        "Blocked for this commercial product unless FAO confirms the proposed use is permitted",
-        "Item-level metadata and third-party exceptions remain to be checked"
+        "FAO terms conflict with the project?s potential commercial promotion/use.",
+        "No exact release, resource-level metadata, or third-party rights were reviewed."
       ],
       "reviewed_by": null,
-      "reviewed_at": null
+      "reviewed_at": null,
+      "license_version": "CC BY 4.0; additional FAO terms have no version number shown on the terms page",
+      "review_signature": null
     },
     "kau_crops_and_weather": {
       "resource_url": "https://kau.in/",
       "download_api_url": null,
-      "approval_status": "UNVERIFIED",
+      "approval_status": "CONDITIONAL",
       "commercial_use_status": "UNKNOWN",
-      "license_name": "No dataset-level license verified",
+      "license_name": "No resource-specific licence verified",
       "license_url": null,
-      "attribution_obligations": "Must be checked for each publication",
+      "attribution_obligations": "Not specified for a dataset; obtain KAU terms and required citation for each selected publication/resource.",
       "share_alike_obligations": "Must be checked for each publication",
-      "redistribution_restrictions": "Must be checked for each publication",
-      "third_party_rights": "UNKNOWN",
+      "redistribution_restrictions": "No blanket website permission inferred; do not redistribute or extract dataset content pending resource-specific terms.",
+      "third_party_rights": "NOT_VERIFIED",
       "kerala_coverage": "Kerala-focused publisher; dataset-level coverage not verified",
       "district_level_availability": "UNKNOWN",
       "training_data_quality_status": "NOT_ASSESSED",
       "training_relevance_status": "NOT_ASSESSED",
-      "authentication_requirements": "Public website; no bulk dataset/API verified",
-      "access_status": "Homepage reachable; current observatory summary only",
+      "authentication_requirements": "No authentication observed for the public webpage; access terms for any data export are not verified.",
+      "access_status": "Official KAU homepage was reachable and displayed a current observatory summary; no versioned historical export or dataset schema was verified.",
       "verification_date": "2026-11-19",
       "evidence_urls": [
         "https://kau.in/"
       ],
       "remaining_concerns": [
-        "No versioned crop guide/variety dataset, historical weather export, or per-resource reuse terms verified"
+        "No exact crop-variety, agronomic, or historical-weather dataset and licence were verified.",
+        "A current webpage is not a licensed historical time series."
       ],
       "reviewed_by": null,
-      "reviewed_at": null
+      "reviewed_at": null,
+      "license_version": "NOT_VERIFIED",
+      "review_signature": null
     },
     "agmarknet_daily_mandi": {
       "resource_url": "https://www.data.gov.in/resource/current-daily-price-various-commodities-various-markets-mandi",
       "download_api_url": null,
-      "approval_status": "UNVERIFIED",
+      "approval_status": "CONDITIONAL",
       "commercial_use_status": "UNKNOWN",
-      "license_name": "Resource-specific license not verified",
-      "license_url": "https://data.gov.in/Godl",
-      "attribution_obligations": "Resource-specific requirements unverified",
+      "license_name": "Resource-specific reuse terms not verified",
+      "license_url": null,
+      "attribution_obligations": "Not verified for the exact price resource; retain source attribution only after the resource terms are confirmed.",
       "share_alike_obligations": "Resource-specific terms unverified",
-      "redistribution_restrictions": "Resource-specific terms unverified",
-      "third_party_rights": "UNKNOWN",
+      "redistribution_restrictions": "Not verified; no market-price data may be acquired or redistributed until the exact resource terms are inspected.",
+      "third_party_rights": "NOT_VERIFIED",
       "kerala_coverage": "India market resource candidate; Kerala rows not verified",
       "district_level_availability": "UNKNOWN",
       "training_data_quality_status": "NOT_ASSESSED",
       "training_relevance_status": "NOT_ASSESSED",
-      "authentication_requirements": "data.gov.in API key may be required; AGMARKNET_API_KEY is empty",
-      "access_status": "AGMARKNET JavaScript shell reachable; data.gov.in resource page HTTP 403",
+      "authentication_requirements": "data.gov.in resource API requires an API key; none was requested or used.",
+      "access_status": "AGMARKNET homepage returned a JavaScript application shell; linked data.gov.in resource returned HTTP 403; no price response/schema was obtained.",
       "verification_date": "2026-11-19",
       "evidence_urls": [
         "https://agmarknet.gov.in/",
         "https://www.data.gov.in/resource/current-daily-price-various-commodities-various-markets-mandi",
-        "https://data.gov.in/Godl"
+        "https://www.data.gov.in/apis"
       ],
       "remaining_concerns": [
-        "API resource ID/schema, commercial rights, Kerala market coverage, price units, and arrivals resource are unverified"
+        "Kerala market coverage, price units, grade/variety, arrival fields, update history, and resource licence are unverified.",
+        "Do not infer arrivals from price rows."
       ],
       "reviewed_by": null,
-      "reviewed_at": null
+      "reviewed_at": null,
+      "license_version": "NOT_VERIFIED",
+      "review_signature": null
     },
     "soilgrids_v2": {
       "resource_url": "https://docs.isric.org/globaldata/soilgrids/SoilGrids_faqs.html",
       "download_api_url": "https://rest.isric.org/soilgrids/v2.0/properties/query",
       "approval_status": "CONDITIONAL",
-      "commercial_use_status": "CONDITIONAL",
-      "license_name": "CC-BY-4.0 as reported for SoilGrids products",
+      "commercial_use_status": "UNKNOWN",
+      "license_name": "ISRIC Data Policy; exact applicable SoilGrids product licence not text-verified in this audit",
       "license_url": "https://isric.org/about/data-policy",
-      "attribution_obligations": "Attribute ISRIC and cite the SoilGrids product/version",
+      "attribution_obligations": "ISRIC documentation requests product/version citation; exact terms must be recorded before reuse.",
       "share_alike_obligations": "No share-alike term identified in the cited product description; confirm exact output terms",
-      "redistribution_restrictions": "Do not redistribute WoSIS contributor records as SoilGrids data; check product-specific data policy",
-      "third_party_rights": "CONTRIBUTOR_DATA_REQUIRES_SEPARATE_REVIEW",
+      "redistribution_restrictions": "Do not redistribute the selected product until its exact data-policy and contributor-data scope are confirmed.",
+      "third_party_rights": "CONTRIBUTOR_RIGHTS_SCOPE_NOT_VERIFIED",
       "kerala_coverage": "Global modeled estimates include Kerala; no AOI-specific subset acquired",
       "district_level_availability": "Not district-labeled; raster/point overlay required",
       "training_data_quality_status": "NOT_ASSESSED",
       "training_relevance_status": "NOT_LAB_GROUND_TRUTH",
-      "authentication_requirements": "Public REST metadata/point-query documentation; no key documented",
-      "access_status": "Layer metadata endpoint HTTP 200 with 14 layer definitions; no soil values acquired",
+      "authentication_requirements": "Public REST documentation does not document an API key; verify current service limits before use.",
+      "access_status": "Official FAQ and layer metadata documentation are reachable; no soil values or raster were requested in this audit.",
       "verification_date": "2026-11-19",
       "evidence_urls": [
         "https://docs.isric.org/globaldata/soilgrids/SoilGrids_faqs.html",
@@ -166,243 +180,273 @@
         "https://isric.org/about/data-policy"
       ],
       "remaining_concerns": [
-        "Review exact product attribution/redistribution terms before ingestion",
-        "Modeled values are not lab ground truth and do not supply phosphorus or potassium"
+        "Exact data licence and redistribution scope require verification.",
+        "Predictions are not laboratory labels; SoilGrids does not provide phosphorus or potassium layers."
       ],
       "reviewed_by": null,
-      "reviewed_at": null
+      "reviewed_at": null,
+      "license_version": "NOT_VERIFIED",
+      "review_signature": null
     },
     "wosis_profiles": {
       "resource_url": "https://docs.isric.org/globaldata/wosis/faq-wosis.html",
       "download_api_url": null,
-      "approval_status": "UNVERIFIED",
-      "commercial_use_status": "UNKNOWN",
-      "license_name": "Contributor-specific license",
+      "approval_status": "CONDITIONAL",
+      "commercial_use_status": "CONDITIONAL",
+      "license_name": "Contributor-specific terms; no single WoSIS-wide licence",
       "license_url": "https://docs.isric.org/globaldata/wosis/faq-wosis.html",
-      "attribution_obligations": "Must follow each contributing source's citation requirements",
+      "attribution_obligations": "Cite ISRIC/WoSIS and the original contributing provider as required by the selected record?s terms.",
       "share_alike_obligations": "Contributor-specific; not globally verified",
-      "redistribution_restrictions": "Some shared profiles are explicitly non-distributable",
-      "third_party_rights": "CONTRIBUTOR_SPECIFIC",
+      "redistribution_restrictions": "Provider-specific; some contributing profiles are explicitly not distributable. No selected records cleared.",
+      "third_party_rights": "PROVIDER_SPECIFIC; no blanket third-party rights clearance.",
       "kerala_coverage": "Global service; Kerala profile count not queried",
       "district_level_availability": "Profiles are points; Kerala/district availability unverified",
       "training_data_quality_status": "NOT_ASSESSED",
       "training_relevance_status": "NOT_ASSESSED",
-      "authentication_requirements": "Public WFS/GraphQL documented; specific service query not tested",
-      "access_status": "Documentation reachable; no data records queried or downloaded",
+      "authentication_requirements": "Public documentation describes services; selected endpoint and record-level access requirements remain unverified.",
+      "access_status": "Official WoSIS overview and FAQ are reachable; no profile extract or individual contributor record was selected.",
       "verification_date": "2026-11-19",
       "evidence_urls": [
-        "https://docs.isric.org/globaldata/wosis/",
+        "https://www.isric.org/explore/wosis",
         "https://docs.isric.org/globaldata/wosis/faq-wosis.html"
       ],
       "remaining_concerns": [
-        "Must inspect provider license for every selected record before use or redistribution",
-        "Measurement methods, depths, and units differ"
+        "Select and review each provider dataset licence before access or reuse.",
+        "Method, depth, unit, date, and property availability vary by profile."
       ],
       "reviewed_by": null,
-      "reviewed_at": null
+      "reviewed_at": null,
+      "license_version": "Varies by contributing dataset; no single version",
+      "review_signature": null
     },
     "soil_health_card_lab": {
       "resource_url": "https://soilhealth.dac.gov.in/",
       "download_api_url": null,
-      "approval_status": "UNVERIFIED",
+      "approval_status": "CONDITIONAL",
       "commercial_use_status": "UNKNOWN",
-      "license_name": "Not verified",
+      "license_name": "No dataset-level licence or permitted bulk-export terms verified",
       "license_url": null,
-      "attribution_obligations": "Not verified",
+      "attribution_obligations": "Not verified; obtain the Department/laboratory?s written terms for any selected record set.",
       "share_alike_obligations": "Not verified",
-      "redistribution_restrictions": "Not verified",
-      "third_party_rights": "UNKNOWN",
+      "redistribution_restrictions": "No record-level reuse or redistribution permission verified; do not export personal or farmer-linked records.",
+      "third_party_rights": "NOT_VERIFIED",
       "kerala_coverage": "India program; Kerala records and access not verified",
       "district_level_availability": "UNKNOWN",
       "training_data_quality_status": "NOT_ASSESSED",
       "training_relevance_status": "NOT_ASSESSED",
-      "authentication_requirements": "Authorized portal/lab access may be required",
-      "access_status": "No public bulk export/API or sample record verified",
+      "authentication_requirements": "Portal/account permissions may be required; no login or personal records were accessed.",
+      "access_status": "No public, georeferenced, bulk training export was verified; no records accessed.",
       "verification_date": "2026-11-19",
       "evidence_urls": [
         "https://soilhealth.dac.gov.in/"
       ],
       "remaining_concerns": [
-        "Obtain explicit permission for georeferenced lab records and model use",
-        "Record analytical method, depth, unit, lab identity, and sample date"
+        "Need written permission, privacy review, georeferenced records, lab methods, units, and sample dates.",
+        "Do not use farmer-linked records without authorization."
       ],
       "reviewed_by": null,
-      "reviewed_at": null
+      "reviewed_at": null,
+      "license_version": "NOT_VERIFIED",
+      "review_signature": null
     },
     "sentinel2_l2a": {
       "resource_url": "https://browser.stac.dataspace.copernicus.eu/collections/sentinel-2-l2a",
       "download_api_url": null,
       "approval_status": "CONDITIONAL",
       "commercial_use_status": "CONDITIONAL",
-      "license_name": "Sentinel Data Legal Notice",
+      "license_name": "Copernicus Sentinel Data Legal Notice; Data Space terms state Sentinel data are free, full, and open",
       "license_url": "https://sentinels.copernicus.eu/documents/247904/690755/Sentinel_Data_Legal_Notice",
-      "attribution_obligations": "Follow the Sentinel Data Legal Notice and retain source/product attribution",
+      "attribution_obligations": "Follow the Sentinel Data Legal Notice credit for Copernicus Sentinel data and identify modifications; do not imply endorsement.",
       "share_alike_obligations": "No share-alike term verified from the notice in this review",
-      "redistribution_restrictions": "Sentinel data terms differ from other Copernicus portal content",
-      "third_party_rights": "PORTAL_CONTENT_AND_PRODUCT_ASSETS_MUST_BE_DISTINGUISHED",
+      "redistribution_restrictions": "Sentinel-data terms differ from other Copernicus Data Space portal materials; review the legal notice for the selected asset.",
+      "third_party_rights": "Sentinel data only; other portal content is outside this review.",
       "kerala_coverage": "Global mission coverage; no Kerala product selected",
       "district_level_availability": "Not district-labeled; geospatial aggregation required",
       "training_data_quality_status": "NOT_ASSESSED",
       "training_relevance_status": "NOT_ASSESSED",
-      "authentication_requirements": "Copernicus Data Space account and expiring token for product download",
-      "access_status": "Official product documentation reachable; legal notice PDF not text-verified; no token configured",
+      "authentication_requirements": "Copernicus Data Space user registration and download credentials are required for product download; none were used.",
+      "access_status": "Official product documentation and Data Space terms are reachable; no asset/product was selected or downloaded.",
       "verification_date": "2026-11-19",
       "evidence_urls": [
         "https://documentation.dataspace.copernicus.eu/Data/SentinelMissions/Sentinel2.html",
-        "https://sentinels.copernicus.eu/documents/247904/690755/Sentinel_Data_Legal_Notice",
-        "https://dataspace.copernicus.eu/terms-and-conditions"
+        "https://dataspace.copernicus.eu/terms-and-conditions",
+        "https://sentinels.copernicus.eu/documents/247904/690755/Sentinel_Data_Legal_Notice"
       ],
       "remaining_concerns": [
-        "Review the exact product legal notice and attribution/redistribution conditions before approval",
-        "No AOI, product version, or image-level provenance record selected"
+        "Read and retain the current legal notice for the chosen asset and verify exact redistribution/attribution obligations.",
+        "No registration credentials are configured or used."
       ],
       "reviewed_by": null,
-      "reviewed_at": null
+      "reviewed_at": null,
+      "license_version": "No numeric version independently verified for the legal notice",
+      "review_signature": null
     },
     "era5_land": {
       "resource_url": "https://cds.climate.copernicus.eu/datasets/reanalysis-era5-land",
       "download_api_url": null,
       "approval_status": "CONDITIONAL",
       "commercial_use_status": "CONDITIONAL",
-      "license_name": "ERA5-Land dataset-specific terms; license not confirmed from current product page",
-      "license_url": "https://cds.climate.copernicus.eu/datasets/reanalysis-era5-land",
-      "attribution_obligations": "Dataset citation and attribution requirements must be recorded before use",
-      "share_alike_obligations": "Not verified",
-      "redistribution_restrictions": "Accept the product terms; redistribution conditions not yet reviewed",
-      "third_party_rights": "UNKNOWN",
+      "license_name": "Licence to Use Copernicus Products",
+      "license_url": "https://apps.ecmwf.int/datasets/licences/copernicus/",
+      "attribution_obligations": "Distribute or publish Copernicus products with clear C3S attribution; use 'Generated using Copernicus Climate Change Service information [Year]' or the equivalent. Adapted or modified distributions must use 'Contains modified Copernicus Climate Change Service information [Year]' and state that neither the European Commission nor ECMWF is responsible for any use.",
+      "share_alike_obligations": "No share-alike term identified in Licence to Use Copernicus Products v1.2.",
+      "redistribution_restrictions": "Reproduction and distribution are permitted worldwide, free of charge and royalty-free for lawful purposes. Record the accepted licence, selected request, product version, source URL and attribution in the provenance manifest. A future public or commercial redistribution remains subject to the exact downloaded asset and any labelled third-party terms.",
+      "third_party_rights": "Clause 7 permits Copernicus Products, but third-party products or information directly accessible through Copernicus portals may carry separate terms and are not covered.",
       "kerala_coverage": "Global land coverage includes Kerala; no subset acquired",
       "district_level_availability": "Grid data; district aggregation required",
       "training_data_quality_status": "NOT_ASSESSED",
       "training_relevance_status": "NOT_ASSESSED",
-      "authentication_requirements": "CDS account, accepted dataset terms, and personal API token",
-      "access_status": "Product page reachable; no token configured and no request made",
+      "authentication_requirements": "CDS account, accepted dataset terms, and personal access token required; none used.",
+      "access_status": "Official dataset and CDS terms are reachable; no CDS request, accepted request terms or download occurred.",
       "verification_date": "2026-11-19",
       "evidence_urls": [
         "https://cds.climate.copernicus.eu/datasets/reanalysis-era5-land",
+        "https://cds.climate.copernicus.eu/disclaimer-privacy",
+        "https://apps.ecmwf.int/datasets/licences/copernicus/",
         "https://cds.climate.copernicus.eu/how-to-api"
       ],
       "remaining_concerns": [
-        "Review exact dataset terms, attribution, and redistribution before approval"
+        "Select and retain the exact CDS request, licence acceptance and product/revision at acquisition.",
+        "ERA5-Land is a reanalysis estimate rather than a local station observation."
       ],
       "reviewed_by": null,
-      "reviewed_at": null
+      "reviewed_at": null,
+      "license_version": "Licence to Use Copernicus Products v1.2 (November 2019)",
+      "review_signature": null
     },
     "nasa_gpm_imerg": {
       "resource_url": "https://gpm.nasa.gov/data/imerg",
       "download_api_url": null,
       "approval_status": "CONDITIONAL",
       "commercial_use_status": "CONDITIONAL",
-      "license_name": "NASA Earth science data-use guidance plus product-specific IMERG notices",
-      "license_url": "https://www.earthdata.nasa.gov/engage/open-data-services-software-policies/data-use-guidance",
-      "attribution_obligations": "Cite NASA and the exact IMERG product/version; verify any product-specific credit",
-      "share_alike_obligations": "No general share-alike term verified; product-specific terms must be checked",
-      "redistribution_restrictions": "Check the selected product and third-party content notices",
-      "third_party_rights": "PRODUCT_SPECIFIC_REVIEW_REQUIRED",
+      "license_name": "GPM & TRMM Data Usage Policy and NASA ESDIS Data-Use Guidance",
+      "license_url": "https://gpm.nasa.gov/data/policy",
+      "attribution_obligations": "Cite the dataset source, authors/producers, title, version, archive/distributor and access date. Use an acknowledgement identifying the NASA/Goddard Space Flight Center team and PPS/GES DISC as applicable. Do not imply NASA endorsement.",
+      "share_alike_obligations": "No share-alike term is identified in the GPM Data Usage Policy.",
+      "redistribution_restrictions": "GPM/TRMM data are freely available. Individual asset metadata must be checked before redistribution because non-NASA or restricted source components may carry separate terms. Preserve the exact V07B Final Run identifier, citation and access locator.",
+      "third_party_rights": "Individual asset and source metadata must be checked; NASA guidance defers to restrictions or separate licences when present.",
       "kerala_coverage": "Global precipitation coverage includes Kerala; no product subset acquired",
       "district_level_availability": "Grid data; district aggregation required",
       "training_data_quality_status": "NOT_ASSESSED",
       "training_relevance_status": "NOT_ASSESSED",
-      "authentication_requirements": "Earthdata Login; some PPS routes require separate registration",
-      "access_status": "GPM product page reachable; no account configured and no product queried",
+      "authentication_requirements": "Earthdata Login or PPS registration is required for applicable downloads; no account was used.",
+      "access_status": "Official IMERG V07 documentation and GPM policy are reachable; no product file or query was made.",
       "verification_date": "2026-11-19",
       "evidence_urls": [
         "https://gpm.nasa.gov/data/imerg",
-        "https://www.earthdata.nasa.gov/engage/open-data-services-software-policies/data-use-guidance"
+        "https://gpm.nasa.gov/data/policy",
+        "https://gpm.nasa.gov/resources/documents/imerg-v07-release-notes",
+        "https://gpm.nasa.gov/resources/documents/imerg-v07-technical-documentation",
+        "https://www.earthdata.nasa.gov/engage/open-data-services-software-policies/data-use-guidance",
+        "https://disc.gsfc.nasa.gov/datasets/GPM_3IMERGDF_07/summary"
       ],
       "remaining_concerns": [
-        "Review exact IMERG release/product terms and attribution before approval"
+        "Check the metadata and restrictions for the exact downloaded V07B Final Run asset.",
+        "Preserve units, scale factors and the 30-minute/daily/monthly aggregation chosen.",
+        "Manual Earthdata/PPS account access may be required."
       ],
       "reviewed_by": null,
-      "reviewed_at": null
+      "reviewed_at": null,
+      "license_version": "GPM V07B Final Run; GPM Data Usage Policy has no numbered licence",
+      "review_signature": null
     },
     "open_meteo_historical": {
       "resource_url": "https://open-meteo.com/en/docs/historical-weather-api",
       "download_api_url": "https://archive-api.open-meteo.com/v1/archive",
       "approval_status": "BLOCKED",
       "commercial_use_status": "PROHIBITED",
-      "license_name": "CC-BY-4.0 data license plus Free API non-commercial service terms",
+      "license_name": "Creative Commons Attribution 4.0 International (CC BY 4.0) for API data plus Free API non-commercial Terms of Use",
       "license_url": "https://open-meteo.com/en/terms",
-      "attribution_obligations": "CC-BY-4.0 attribution would be required for data",
+      "attribution_obligations": "CC BY 4.0 requires appropriate credit, licence link, and indication of changes; location-level attribution requirements also apply.",
       "share_alike_obligations": "No share-alike indicated in the data license",
-      "redistribution_restrictions": "Free API is restricted to non-commercial purposes; commercial service requires subscription",
-      "third_party_rights": "Product/source-specific data terms still apply",
+      "redistribution_restrictions": "Free API use is limited to non-commercial purposes; commercial product use is blocked without a paid plan, which this project forbids.",
+      "third_party_rights": "Underlying models/data have source-specific licences and attribution listed by Open-Meteo.",
       "kerala_coverage": "Global model data includes Kerala",
       "district_level_availability": "Point/grid estimates; not district-labeled",
       "training_data_quality_status": "NOT_ASSESSED",
       "training_relevance_status": "NOT_ASSESSED",
-      "authentication_requirements": "No key for free API; paid subscription for commercial API use",
-      "access_status": "Terms page confirms non-commercial limitation; no API request made",
+      "authentication_requirements": "No key for free API; rate limits apply. Commercial access is paid and is excluded by project restrictions.",
+      "access_status": "Official terms were reachable; no API request or data acquisition was made.",
       "verification_date": "2026-11-19",
       "evidence_urls": [
         "https://open-meteo.com/en/terms",
-        "https://open-meteo.com/en/docs/historical-weather-api"
+        "https://open-meteo.com/en/licence",
+        "https://open-meteo.com/en/docs/historical-weather-api",
+        "https://creativecommons.org/licenses/by/4.0/"
       ],
       "remaining_concerns": [
-        "Blocked for this commercial project unless an appropriate commercial subscription/terms are approved"
+        "Free API terms prohibit commercial use; cannot be used for this hybrid/future-commercial product without a paid plan.",
+        "No API calls made."
       ],
       "reviewed_by": null,
-      "reviewed_at": null
+      "reviewed_at": null,
+      "license_version": "CC BY 4.0; Terms of Use current as checked",
+      "review_signature": null
     },
     "plantvillage": {
       "resource_url": "https://github.com/spMohanty/PlantVillage-Dataset",
       "download_api_url": "https://huggingface.co/datasets/mohanty/PlantVillage",
-      "approval_status": "UNVERIFIED",
-      "commercial_use_status": "UNKNOWN",
-      "license_name": "Hugging Face mirror declares CC-BY-SA-3.0; upstream repository has no checked LICENSE file",
-      "license_url": "https://huggingface.co/datasets/mohanty/PlantVillage",
-      "attribution_obligations": "Mirror requires CC-BY-SA-3.0 attribution if applicable; original image attribution/rights unclear",
+      "approval_status": "CONDITIONAL",
+      "commercial_use_status": "CONDITIONAL",
+      "license_name": "CC BY-SA 3.0 declared by Hugging Face dataset card; upstream GitHub repository has no checked licence file",
+      "license_url": "https://huggingface.co/datasets/mohanty/PlantVillage/raw/main/README.md",
+      "attribution_obligations": "CC BY-SA 3.0 attribution/share-alike obligations would apply if the mirror licence is valid for the underlying images; scope is unresolved.",
       "share_alike_obligations": "CC-BY-SA-3.0 share-alike may apply to mirror-covered content; scope requires review",
-      "redistribution_restrictions": "Do not redistribute or train commercially until image-level rights and license scope are verified",
-      "third_party_rights": "UNCLEAR_IMAGE_LEVEL_OWNERSHIP",
+      "redistribution_restrictions": "Do not redistribute or use commercially until upstream image ownership and mirror licence scope are established.",
+      "third_party_rights": "IMAGE_LEVEL_RIGHTS_NOT_VERIFIED",
       "kerala_coverage": "No Kerala field provenance documented",
       "district_level_availability": "NO",
       "training_data_quality_status": "NOT_ASSESSED",
       "training_relevance_status": "NOT_KERALA_FIELD_DATA",
-      "authentication_requirements": "Public GitHub/Hugging Face; no API key",
-      "access_status": "README/card reachable; upstream LICENSE path returned 404; no images downloaded",
+      "authentication_requirements": "Public GitHub/Hugging Face; no API key; access does not establish reuse rights.",
+      "access_status": "Upstream GitHub README and Hugging Face card reachable; card lists 43,596 train + 10,709 test examples (sum 54,305) but states 54,306 images.",
       "verification_date": "2026-11-19",
       "evidence_urls": [
         "https://github.com/spMohanty/PlantVillage-Dataset",
-        "https://huggingface.co/datasets/mohanty/PlantVillage",
-        "https://huggingface.co/datasets/mohanty/PlantVillage/raw/main/README.md"
+        "https://huggingface.co/datasets/mohanty/PlantVillage/raw/main/README.md",
+        "https://creativecommons.org/licenses/by-sa/3.0/"
       ],
       "remaining_concerns": [
-        "Image-level ownership and commercial rights unresolved",
-        "Published upstream and mirror split counts differ by one",
-        "Controlled images are not Kerala field validation"
+        "Upstream repository lacks a dataset licence; mirror metadata cannot establish rights in all images.",
+        "One-image discrepancy between published headline and split counts.",
+        "No Kerala field provenance; controlled imagery is not field validation."
       ],
       "reviewed_by": null,
-      "reviewed_at": null
+      "reviewed_at": null,
+      "license_version": "3.0 (mirror card only; upstream image rights not verified)",
+      "review_signature": null
     },
     "plantdoc": {
       "resource_url": "https://github.com/pratikkayal/PlantDoc-Dataset",
       "download_api_url": "https://github.com/pratikkayal/PlantDoc-Dataset",
-      "approval_status": "UNVERIFIED",
-      "commercial_use_status": "UNKNOWN",
-      "license_name": "Repository declares CC-BY-4.0",
+      "approval_status": "CONDITIONAL",
+      "commercial_use_status": "CONDITIONAL",
+      "license_name": "CC BY 4.0 declared by the PlantDoc repository; rights to web-scraped source images are not established",
       "license_url": "https://github.com/pratikkayal/PlantDoc-Dataset/blob/master/LICENSE.txt",
-      "attribution_obligations": "Attribute PlantDoc authors and mark changes if any",
+      "attribution_obligations": "Repository licence requires attribution and indication of changes; attribution for underlying images is unresolved.",
       "share_alike_obligations": "No share-alike term in CC-BY-4.0",
-      "redistribution_restrictions": "Repository license does not establish that uploaders held rights to scraped images",
-      "third_party_rights": "UNCLEAR_SCRAPED_IMAGE_OWNERSHIP",
+      "redistribution_restrictions": "Do not redistribute or use commercially until image-level rights and scope of the repository licence are clarified.",
+      "third_party_rights": "WEB_SCRAPED_IMAGE_RIGHTS_NOT_VERIFIED",
       "kerala_coverage": "No reliable image capture location documented",
       "district_level_availability": "NO",
       "training_data_quality_status": "NOT_ASSESSED",
       "training_relevance_status": "NOT_KERALA_FIELD_DATA",
-      "authentication_requirements": "Public GitHub; no API key",
-      "access_status": "README/license reachable; no images downloaded",
+      "authentication_requirements": "Public GitHub repository; no authentication required for browsing; this is not permission to reuse images.",
+      "access_status": "Official repository page and declared CC BY 4.0 licence reachable; no image files downloaded or inspected.",
       "verification_date": "2026-11-19",
       "evidence_urls": [
         "https://github.com/pratikkayal/PlantDoc-Dataset",
-        "https://raw.githubusercontent.com/pratikkayal/PlantDoc-Dataset/master/LICENSE.txt",
-        "https://raw.githubusercontent.com/pratikkayal/PlantDoc-Dataset/master/README.md"
+        "https://github.com/pratikkayal/PlantDoc-Dataset/blob/master/LICENSE.txt",
+        "https://creativecommons.org/licenses/by/4.0/"
       ],
       "remaining_concerns": [
-        "Image-level ownership and commercial permission unresolved",
-        "Labels are from web-scraped images and are not expert-verified Kerala field labels"
+        "The dataset paper describes internet-scraped images; source-image rights are not verified by the repository-level licence.",
+        "No reliable Kerala field provenance and labels were not independently audited."
       ],
       "reviewed_by": null,
-      "reviewed_at": null
+      "reviewed_at": null,
+      "license_version": "4.0 (repository declaration only; source-image rights not verified)",
+      "review_signature": null
     }
   },
   "portfolio_reviews": {
@@ -439,12 +483,12 @@
       "rationale": "Review the selected product and asset terms and attribution before use; no imagery was acquired."
     },
     "era5_land": {
-      "status": "CONDITIONAL",
-      "rationale": "Dataset-specific terms and attribution must be retained for a selected request; no data was acquired."
+      "status": "APPROVED_PORTFOLIO_RESEARCH_ONLY",
+      "rationale": "Internal inventory assessment only: cited Copernicus publisher terms may appear compatible with a limited, non-commercial portfolio/research scope, subject to C3S attribution, the required responsibility disclaimer, the exact CDS request, and any third-party terms. This is not source-owner permission or project-owner authorization and does not authorize acquisition, research, portfolio/demo display, public sharing, ML training, redistribution, or deployment. ERA5-Land is a reanalysis product, not station observations. Acquisition and archive-integrity facts are recorded separately and do not authorize project use; future commercial review remains separate."
     },
     "nasa_gpm_imerg": {
-      "status": "CONDITIONAL",
-      "rationale": "Confirm product/version terms and third-party content before use; no data was acquired."
+      "status": "APPROVED_PORTFOLIO_RESEARCH_ONLY",
+      "rationale": "Internal inventory assessment only: cited GPM/NASA publisher policy may appear compatible with a limited, non-commercial portfolio/research scope, subject to GPM citation/acknowledgement, exact V07B asset metadata, and third-party terms. This is not source-owner permission or project-owner authorization and does not authorize acquisition, research, portfolio/demo display, public sharing, ML training, redistribution, or deployment. The source is GPM IMERG Final Run V07B. Exact individual asset metadata must be checked before redistribution; no data was acquired."
     },
     "open_meteo_historical": {
       "status": "APPROVED_PORTFOLIO_RESEARCH_ONLY",
@@ -473,12 +517,16 @@
       "crop_coverage": "Not verified from live schema",
       "target_variables": "Area/production/yield fields must be confirmed from resource schema; do not assume",
       "record_count": null,
-      "file_format": "API response format not verified",
-      "license": "Resource-level license not verified",
-      "access_check": "Catalog HTTP 403; prior unauthenticated API probe HTTP 400; no non-empty key configured",
+      "file_format": "NOT_VERIFIED; resource page and API schema were inaccessible",
+      "license": "Resource-level licence not verified; official resource page returned HTTP 403",
+      "access_check": "Official resource page returned HTTP 403 during this audit; data.gov.in API access normally requires a resource ID and API key; no key was used.",
       "download_status": "not_downloaded",
       "local_path": null,
-      "blocker": "Authenticated schema, Kerala records, units, update cadence, and license are unverified"
+      "blocker": "Exact resource licence, schema, units, Kerala coverage, and version are unverified.; API access requires an authorized key; do not request or embed one.",
+      "download_date": null,
+      "download_size_bytes": null,
+      "sha256": null,
+      "last_checked": "2026-11-19"
     },
     {
       "id": "faostat_qcl",
@@ -494,12 +542,16 @@
       "crop_coverage": "Global crop items; individual items must be checked",
       "target_variables": "FAOSTAT element and unit fields include area, production, and yield where reported",
       "record_count": null,
-      "file_format": "ZIP (bulk archive; not acquired)",
-      "license": "CC-BY-4.0 by default with additional FAO terms, third-party exceptions, attribution; terms prohibit use in conjunction with promotion of a commercial enterprise/product/service",
-      "access_check": "Official QCL page and terms reachable; bulk ZIP HEAD returned HTTP 403",
+      "file_format": "Machine-readable bulk download; official QCL archive access failed in the prior read-only check, so the exact file format was not re-verified.",
+      "license": "Creative Commons Attribution 4.0 International (CC BY 4.0) plus FAO Statistical Database Terms of Use",
+      "access_check": "Official QCL page and database terms are reachable; the previous official bulk ZIP check returned HTTP 403; no archive acquired.",
       "download_status": "not_downloaded",
       "local_path": null,
-      "blocker": "Bulk access failed in this environment; suitability also depends on intended use and item-level terms"
+      "blocker": "FAO terms conflict with the project?s potential commercial promotion/use.; No exact release, resource-level metadata, or third-party rights were reviewed.",
+      "download_date": null,
+      "download_size_bytes": null,
+      "sha256": null,
+      "last_checked": "2026-11-19"
     },
     {
       "id": "kau_crops_and_weather",
@@ -514,12 +566,16 @@
       "crop_coverage": "Crop-specific publications not inventoried from a downloadable catalog in this check",
       "target_variables": "Publication-specific; no structured labels verified",
       "record_count": null,
-      "file_format": "Web pages/publications; no machine-readable dataset verified",
-      "license": "Must be checked per publication/resource",
-      "access_check": "Homepage reachable; current summary is not a verified historical dataset",
+      "file_format": "Official pages are HTML and linked publications are PDF; no structured, versioned dataset was identified.",
+      "license": "No resource-specific licence verified",
+      "access_check": "Official KAU homepage was reachable and displayed a current observatory summary; no versioned historical export or dataset schema was verified.",
       "download_status": "not_downloaded",
       "local_path": null,
-      "blocker": "No versioned downloadable crop/variety dataset or reuse terms verified"
+      "blocker": "No exact crop-variety, agronomic, or historical-weather dataset and licence were verified.; A current webpage is not a licensed historical time series.",
+      "download_date": null,
+      "download_size_bytes": null,
+      "sha256": null,
+      "last_checked": "2026-11-19"
     },
     {
       "id": "agmarknet_daily_mandi",
@@ -537,12 +593,16 @@
       "crop_coverage": "Commodity fields/schema not verified",
       "target_variables": "Min/max/modal price advertised; units, variety, grade, arrivals field availability not verified",
       "record_count": null,
-      "file_format": "API response schema not verified",
+      "file_format": "NOT_VERIFIED; exact data.gov.in resource schema and response format were inaccessible.",
       "license": "Resource-specific reuse terms not verified",
-      "access_check": "AGMARKNET returned JavaScript application shell; data.gov.in catalog returned HTTP 403; AGMARKNET_API_KEY is empty",
+      "access_check": "AGMARKNET homepage returned a JavaScript application shell; linked data.gov.in resource returned HTTP 403; no price response/schema was obtained.",
       "download_status": "not_downloaded",
       "local_path": null,
-      "blocker": "No authenticated schema/sample, license, or confirmed arrivals resource"
+      "blocker": "Kerala market coverage, price units, grade/variety, arrival fields, update history, and resource licence are unverified.; Do not infer arrivals from price rows.",
+      "download_date": null,
+      "download_size_bytes": null,
+      "sha256": null,
+      "last_checked": "2026-11-19"
     },
     {
       "id": "soilgrids_v2",
@@ -561,13 +621,17 @@
       "crop_coverage": "Not crop-labeled",
       "target_variables": "Model estimates include pH, SOC-related properties, nitrogen and texture; phosphorus/potassium are not listed",
       "record_count": "14 layer definitions in successful metadata response; no soil measurements acquired",
-      "file_format": "JSON metadata; raster/point data not acquired",
+      "file_format": "JSON metadata/point-query service; raster product format and package were not selected or acquired.",
       "spatial_resolution": "250 m; standard depth layers",
-      "license": "CC-BY as described by ISRIC; attribution and product disclaimers apply",
-      "access_check": "Layer metadata endpoint HTTP 200, 6,791 bytes; repeated request later timed out",
+      "license": "ISRIC Data Policy; exact applicable SoilGrids product licence not text-verified in this audit",
+      "access_check": "Official FAQ and layer metadata documentation are reachable; no soil values or raster were requested in this audit.",
       "download_status": "metadata_verified_only",
       "local_path": null,
-      "blocker": "Modeled values are not lab labels; no local samples or raster subset acquired"
+      "blocker": "Exact data licence and redistribution scope require verification.; Predictions are not laboratory labels; SoilGrids does not provide phosphorus or potassium layers.",
+      "download_date": null,
+      "download_size_bytes": null,
+      "sha256": null,
+      "last_checked": "2026-11-19"
     },
     {
       "id": "wosis_profiles",
@@ -586,12 +650,16 @@
       "crop_coverage": "Not crop-labeled",
       "target_variables": "Measured profile/horizon properties include organic carbon, total nitrogen, pH and phosphorus forms; methods and properties vary",
       "record_count": "Snapshot-dependent; docs report over 6 million soil records across profiles",
-      "file_format": "WFS/GraphQL or snapshot; no records acquired",
-      "license": "Provider-specific; some shared profiles are explicitly not distributable",
-      "access_check": "Official documentation reachable; no data query or source-specific license check performed",
+      "file_format": "Public services include geospatial/tabular access; exact export format for a selected provider record was not verified.",
+      "license": "Contributor-specific terms; no single WoSIS-wide licence",
+      "access_check": "Official WoSIS overview and FAQ are reachable; no profile extract or individual contributor record was selected.",
       "download_status": "not_downloaded",
       "local_path": null,
-      "blocker": "Must query Kerala coverage and filter records by the contributing provider's reuse terms"
+      "blocker": "Select and review each provider dataset licence before access or reuse.; Method, depth, unit, date, and property availability vary by profile.",
+      "download_date": null,
+      "download_size_bytes": null,
+      "sha256": null,
+      "last_checked": "2026-11-19"
     },
     {
       "id": "soil_health_card_lab",
@@ -606,12 +674,16 @@
       "crop_coverage": "Not verified",
       "target_variables": "Lab properties and methods must be confirmed from authorized records",
       "record_count": null,
-      "file_format": "No public bulk file verified",
-      "license": "Not verified",
-      "access_check": "No export/API or sample record validated",
+      "file_format": "Portal records; public bulk export format not verified.",
+      "license": "No dataset-level licence or permitted bulk-export terms verified",
+      "access_check": "No public, georeferenced, bulk training export was verified; no records accessed.",
       "download_status": "not_downloaded",
       "local_path": null,
-      "blocker": "Requires authorized georeferenced lab records and permission for model use"
+      "blocker": "Need written permission, privacy review, georeferenced records, lab methods, units, and sample dates.; Do not use farmer-linked records without authorization.",
+      "download_date": null,
+      "download_size_bytes": null,
+      "sha256": null,
+      "last_checked": "2026-11-19"
     },
     {
       "id": "sentinel2_l2a",
@@ -630,18 +702,23 @@
       "crop_coverage": "No crop labels; satellite measurements/features only",
       "target_variables": "13 MSI bands; derive indices only with documented formulas/masks/resampling",
       "record_count": null,
-      "file_format": "L2A product assets; none downloaded",
+      "file_format": "Sentinel-2 L2A SAFE products with JP2 bands/metadata; no scene or asset selected.",
       "spatial_resolution": "10 m, 20 m, and 60 m band resolutions",
-      "license": "Sentinel data legal notice provides free/open use with attribution; portal assets have separate terms",
-      "access_check": "Official documentation reachable; no Copernicus credentials configured and no imagery downloaded",
+      "license": "Copernicus Sentinel Data Legal Notice; Data Space terms state Sentinel data are free, full, and open",
+      "access_check": "Official product documentation and Data Space terms are reachable; no asset/product was selected or downloaded.",
       "download_status": "not_downloaded",
       "local_path": null,
-      "blocker": "No account token/AOI and no authorized farm sample selected"
+      "blocker": "Read and retain the current legal notice for the chosen asset and verify exact redistribution/attribution obligations.; No registration credentials are configured or used.",
+      "download_date": null,
+      "download_size_bytes": null,
+      "sha256": null,
+      "last_checked": "2026-11-19"
     },
     {
       "id": "era5_land",
       "dataset_version": null,
-      "version_status": "NOT_ACQUIRED",
+      "version_status": "ACQUIRED_VERSION_UNPINNED",
+      "identified_current_version": "ERA5-Land hourly data from 1950 to present",
       "name": "Copernicus ERA5-Land",
       "publisher": "ECMWF / Copernicus Climate Data Store",
       "official_urls": [
@@ -654,19 +731,27 @@
       "crop_coverage": "Not crop-labeled",
       "target_variables": "Weather and land variables; units depend on variable",
       "record_count": null,
-      "file_format": "GRIB; none downloaded",
+      "file_format": "Two acquired ZIP archives containing NetCDF (request 1) and GRIB (request 2); both passed ZIP CRC validation.",
       "spatial_resolution": "0.1-degree grid, approximately 9 km native",
-      "license": "Dataset-specific terms must be accepted and retained",
-      "access_check": "No CDS token configured; no request made",
-      "download_status": "not_downloaded",
+      "license": "Licence to Use Copernicus Products v1.2 (November 2019); C3S CDS Terms of Use",
+      "access_check": "Two archive files were reconciled against the acquisition manifest and quality report; exact CDS request parameters remain unconfirmed because the request-history MHT was not inspected.",
+      "download_status": "acquired",
+      "acquisition_status": "ACQUIRED_VERIFIED",
+      "archive_integrity_status": "VERIFIED",
+      "data_quality_status": "QUALITY_REJECTED",
       "local_path": null,
-      "blocker": "No token or accepted dataset terms in this environment"
+      "blocker": "Both archives are rejected for model training because temporal coverage and data-quality evidence are insufficient. The product version and exact request parameters remain unpinned/unconfirmed. The internal publisher-terms classification does not establish source-owner permission or project-owner authorization. Historical acquisition and archive-integrity facts do not authorize portfolio/demo display, research, public sharing, training, commercial use, redistribution, or deployment; each proposed activity requires separate, valid purpose-specific project authorization and any required source-owner rights. C3S attribution, the disclaimer, exact request terms, and third-party terms remain relevant; commercial use remains conditional.",
+      "download_date": "2026-11-20",
+      "download_size_bytes": 2673387578,
+      "sha256": null,
+      "last_checked": "2026-11-19"
     },
     {
       "id": "nasa_gpm_imerg",
       "dataset_version": null,
       "version_status": "NOT_ACQUIRED",
-      "name": "NASA GPM IMERG",
+      "identified_current_version": "V07B",
+      "name": "NASA GPM IMERG Final Run",
       "publisher": "NASA",
       "official_urls": [
         "https://gpm.nasa.gov/data/imerg",
@@ -679,12 +764,16 @@
       "crop_coverage": "Not crop-labeled",
       "target_variables": "Precipitation rate or accumulation; units and scale factor are product-specific",
       "record_count": null,
-      "file_format": "HDF, GeoTIFF, NetCDF, or other product format; none downloaded",
-      "license": "NASA ESDIS data generally open/CC0 unless product-specific terms state otherwise",
-      "access_check": "Official product page reachable; no Earthdata credentials configured",
+      "file_format": "HDF, GeoTIFF, or NetCDF depending on the exact IMERG product and temporal aggregation; no file acquired.",
+      "license": "GPM & TRMM Data Usage Policy; NASA ESDIS Data-Use Guidance; not represented as CC0",
+      "access_check": "Official IMERG V07 Final Run policy and product documentation are reachable; no asset metadata or file was acquired.",
       "download_status": "not_downloaded",
       "local_path": null,
-      "blocker": "No Earthdata login; product/version and regional sample not selected"
+      "blocker": "Internal licence/terms compatibility classification only; apparent compatibility is conditional on GPM citation/acknowledgement and checking exact V07B asset metadata before redistribution. This is not source-owner permission or project-owner authorization, and it does not authorize acquisition or project activity. Acquisition remains pending; future commercial use remains separate.",
+      "download_date": null,
+      "download_size_bytes": null,
+      "sha256": null,
+      "last_checked": "2026-11-19"
     },
     {
       "id": "open_meteo_historical",
@@ -702,12 +791,16 @@
       "crop_coverage": "Not crop-labeled",
       "target_variables": "Weather/reanalysis fields; model, units, timezone, and coordinates required",
       "record_count": null,
-      "file_format": "JSON API; no request made",
-      "license": "CC-BY-4.0 data terms plus free-service restriction to non-commercial use and call limits",
-      "access_check": "Terms page reachable; no API request made",
+      "file_format": "JSON API response; CSV may be available by request option; no API request was made.",
+      "license": "Creative Commons Attribution 4.0 International (CC BY 4.0) for API data plus Free API non-commercial Terms of Use",
+      "access_check": "Official terms were reachable; no API request or data acquisition was made.",
       "download_status": "blocked_pending_commercial_use_decision",
       "local_path": null,
-      "blocker": "Commercial status is undecided; do not connect free non-commercial service"
+      "blocker": "Free API terms prohibit commercial use; cannot be used for this hybrid/future-commercial product without a paid plan.; No API calls made.",
+      "download_date": null,
+      "download_size_bytes": null,
+      "sha256": null,
+      "last_checked": "2026-11-19"
     },
     {
       "id": "plantvillage",
@@ -726,12 +819,16 @@
       "crop_coverage": "14 species; current upstream README says 26 diseases",
       "target_variables": "38 healthy/disease classes on Hugging Face card; image, crop, disease, leaf_id",
       "record_count": 54306,
-      "file_format": "Image dataset; Hugging Face card reports approximately 2 GB",
-      "license": "Hugging Face card CC-BY-SA-3.0; upstream repo has no LICENSE at checked path; underlying rights require review",
-      "access_check": "README and card reachable; official splits listed as 43,596/10,709 (sum differs from headline by one)",
+      "file_format": "JPEG images; Hugging Face card reports an approximately 2 GB dataset; no images acquired.",
+      "license": "CC BY-SA 3.0 declared by Hugging Face dataset card; upstream GitHub repository has no checked licence file",
+      "access_check": "Upstream GitHub README and Hugging Face card reachable; card lists 43,596 train + 10,709 test examples (sum 54,305) but states 54,306 images.",
       "download_status": "not_downloaded",
       "local_path": null,
-      "blocker": "License/right review needed; controlled imagery is not Kerala field validation; keep out of commercial training"
+      "blocker": "Upstream repository lacks a dataset licence; mirror metadata cannot establish rights in all images.; One-image discrepancy between published headline and split counts.; No Kerala field provenance; controlled imagery is not field validation.",
+      "download_date": null,
+      "download_size_bytes": null,
+      "sha256": null,
+      "last_checked": "2026-11-19"
     },
     {
       "id": "plantdoc",
@@ -749,16 +846,20 @@
       "crop_coverage": "13 plant species and up to 17 classes, per repository README",
       "target_variables": "Disease classification labels",
       "record_count": 2598,
-      "file_format": "Train/test image directories; not downloaded",
-      "license": "Repository declares CC-BY-4.0; underlying scraped-image rights and redistribution scope require review",
-      "access_check": "Repository README and license text reachable",
+      "file_format": "Image files in repository train/test folders; exact file encodings not audited; no images acquired.",
+      "license": "CC BY 4.0 declared by the PlantDoc repository; rights to web-scraped source images are not established",
+      "access_check": "Official repository page and declared CC BY 4.0 licence reachable; no image files downloaded or inspected.",
       "download_status": "not_downloaded",
       "local_path": null,
-      "blocker": "Rights review and Kerala field evaluation data required before any model use"
+      "blocker": "The dataset paper describes internet-scraped images; source-image rights are not verified by the repository-level licence.; No reliable Kerala field provenance and labels were not independently audited.",
+      "download_date": null,
+      "download_size_bytes": null,
+      "sha256": null,
+      "last_checked": "2026-11-19"
     }
   ],
   "stage_status": {
-    "stage_6b": "commercial_gate_implemented_acquisition_blocked",
+    "stage_6b": "stage_12_review_complete_no_source_approved_no_dataset_acquired",
     "stage_7": "not_started_no_approved_dataset",
     "stage_8": "not_started_no_validated_labels",
     "stage_9": "not_started_no_validated_model"

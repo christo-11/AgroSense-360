@@ -1,4 +1,4 @@
-import type { Farm, Plot } from "../api";
+import type { Farm, GeoJSONBoundary, Plot } from "../api";
 import { boundaryToPolygons } from "../geojson";
 
 type Props = {
@@ -11,7 +11,7 @@ type Props = {
 type Feature = {
   id: string;
   name: string;
-  boundary: NonNullable<Farm["boundary"]>;
+  boundary: GeoJSONBoundary;
   kind: "farm" | "plot";
   selected: boolean;
 };
@@ -29,7 +29,7 @@ export default function GeoBoundaryMap({ farm, plots, selectedPlotId, onSelectPl
       kind: "farm" as const,
       selected: false,
     }] : []),
-    ...plots.map((plot) => ({
+    ...plots.filter((plot): plot is Plot & { boundary: GeoJSONBoundary } => plot.boundary !== null).map((plot) => ({
       id: plot.id,
       name: plot.name,
       boundary: plot.boundary,
@@ -42,7 +42,7 @@ export default function GeoBoundaryMap({ farm, plots, selectedPlotId, onSelectPl
     return (
       <div className="geo-map-empty" role="status">
         <strong>No mapped boundaries</strong>
-        <span>Add a farm or plot GeoJSON boundary to view its coordinates here.</span>
+        <span>Plot locations are saved privately. Boundary drawing is optional.</span>
       </div>
     );
   }

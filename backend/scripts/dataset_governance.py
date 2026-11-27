@@ -13,12 +13,13 @@ from pathlib import Path
 from urllib.parse import urlparse
 from uuid import uuid4
 
-APPROVAL_STATUSES = {"APPROVED", "CONDITIONAL", "BLOCKED", "UNVERIFIED"}
+APPROVAL_STATUSES = {"APPROVED", "CONDITIONAL", "BLOCKED", "REJECTED", "UNVERIFIED"}
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 _APPROVAL_FIELDS = (
     "resource_url",
     "download_api_url",
     "license_name",
+    "license_version",
     "license_url",
     "commercial_use_status",
     "attribution_obligations",
@@ -64,6 +65,45 @@ def load_inventory(path: Path) -> dict:
         if record["id"] in seen:
             raise DatasetEligibilityError(f"Duplicate dataset resource id: {record['id']}.")
         seen.add(record["id"])
+        if not all(
+            isinstance(record.get(field), str) and record[field].strip()
+            for field in ("name", "publisher", "geographic_coverage", "file_format", "download_status")
+        ):
+            raise DatasetEligibilityError(
+                f"Dataset {record['id']} is missing publisher, coverage, format, or acquisition status."
+            )
+        official_urls = record.get("official_urls") or []
+        if not isinstance(official_urls, list):
+            raise DatasetEligibilityError(f"Dataset {record['id']} official_urls must be a list.")
+        if not isinstance(record.get("official_url"), str) and not official_urls:
+            raise DatasetEligibilityError(f"Dataset {record['id']} must identify an official source URL.")
+        reviews = inventory.get("commercial_reviews")
+        review = reviews.get(record["id"]) if isinstance(reviews, dict) else None
+        if not isinstance(review, dict):
+            raise DatasetEligibilityError(f"Dataset {record['id']} has no commercial licensing review.")
+        if review.get("approval_status") not in APPROVAL_STATUSES:
+            raise DatasetEligibilityError(f"Dataset {record['id']} has an invalid approval status.")
+        missing_review_fields = [
+            field
+            for field in (
+                "resource_url",
+                "license_name",
+                "license_version",
+                "commercial_use_status",
+                "attribution_obligations",
+                "redistribution_restrictions",
+                "authentication_requirements",
+                "access_status",
+                "verification_date",
+            )
+            if not isinstance(review.get(field), str) or not review[field].strip()
+        ]
+        if missing_review_fields:
+            raise DatasetEligibilityError(
+                f"Dataset {record['id']} is missing required licensing or verification metadata: "
+                + ", ".join(missing_review_fields)
+                + "."
+            )
     return inventory
 
 
@@ -119,6 +159,15 @@ def _validate_approved_review(
         )
     if review["commercial_use_status"] != "PERMITTED":
         raise DatasetEligibilityError("Commercial use is not verified as permitted.")
+    if review["license_version"].casefold() in {
+        "unknown",
+        "not verified",
+        "not_verified",
+        "unverified",
+    }:
+        raise DatasetEligibilityError("The exact dataset license version is not verified.")
+    if not isinstance(source.get("file_format"), str) or not source["file_format"].strip():
+        raise DatasetEligibilityError("The dataset file format must be recorded before approval.")
     if review["third_party_rights"] != "CLEARED":
         raise DatasetEligibilityError("Third-party rights are not marked as cleared.")
     if not _is_http_url(review["resource_url"]) or not _is_http_url(review["download_api_url"]):

@@ -44,8 +44,8 @@ const portfolioReviews = sourceInventory.portfolio_reviews as Record<
   { status: PortfolioStatus; rationale: string }
 >;
 const portfolioStatusLabels: Record<PortfolioStatus, string> = {
-  APPROVED_PORTFOLIO_AND_COMMERCIAL: "Portfolio + commercial approved",
-  APPROVED_PORTFOLIO_RESEARCH_ONLY: "Portfolio / research only",
+  APPROVED_PORTFOLIO_AND_COMMERCIAL: "Licence/terms review — not project authorization",
+  APPROVED_PORTFOLIO_RESEARCH_ONLY: "Licence/terms review — not project authorization",
   CONDITIONAL: "Conditional",
   BLOCKED: "Blocked",
   UNVERIFIED: "Unverified",
@@ -93,7 +93,7 @@ export function PortfolioLanding({
     if (!demoModeConfirmed || status?.api !== "online" || status.database !== "connected") {
       setCatalogueCheck({
         state: "unavailable",
-        detail: "Requires a reachable backend that confirms public demo mode.",
+        detail: "Requires a reachable backend that confirms the local read-only configuration.",
       });
       return () => { active = false; };
     }
@@ -107,14 +107,14 @@ export function PortfolioLanding({
       setCatalogueCheck({
         state: ready ? "available" : "unavailable",
         detail: ready
-          ? `The public API reports ${districtCount} districts and ${cropCount} crop records. Individual verification remains visible per record.`
+          ? `The local API reports ${districtCount} districts and ${cropCount} crop records. Individual verification remains visible per record.`
           : `The API reports ${districtCount} districts and ${cropCount} crops; the expected 14-district catalogue is incomplete.`,
       });
     }).catch((error: unknown) => {
       if (!active) return;
       setCatalogueCheck({
         state: "unavailable",
-        detail: error instanceof Error ? error.message : "The public catalogue endpoints could not be checked.",
+        detail: error instanceof Error ? error.message : "The local catalogue endpoints could not be checked.",
       });
     });
 
@@ -124,11 +124,11 @@ export function PortfolioLanding({
     <div className="portfolio-page">
       <section className="portfolio-hero glass-card" aria-labelledby="portfolio-title">
         <div className="portfolio-hero-copy">
-          <div className="eyebrow"><span className="live-dot" /> PUBLIC PORTFOLIO · READ ONLY</div>
+          <div className="eyebrow"><span className="live-dot" /> PROPOSED LOCAL PREVIEW · READ ONLY</div>
           <h2 id="portfolio-title">Agriculture intelligence, grounded in transparent data.</h2>
           <p>
-            AgroSense-360 is a Kerala-focused portfolio project exploring how responsible software
-            can connect district and crop information without inventing field observations or AI results.
+            AgroSense-360 is a Kerala-focused technical preview for district and crop catalogue
+            information. This interface is not authorization for a public demonstration or data distribution.
           </p>
           <div className="portfolio-actions">
             <button type="button" className="button button-primary" onClick={onBrowseCatalog}>
@@ -141,20 +141,20 @@ export function PortfolioLanding({
         </div>
         <div className="portfolio-hero-note">
           <ShieldCheck size={20} />
-          <strong>No farmer accounts or farm-boundary collection in this demo.</strong>
-          <span>Only public catalogue reads are enabled. Profiles and suitability are visibly marked by verification status.</span>
+          <strong>Public demonstration and data distribution are NOT AUTHORIZED.</strong>
+          <span>Technical read-only capability and internal licence classification do not grant source-owner permission or project-owner authorization.</span>
         </div>
       </section>
 
       <section className="portfolio-section" aria-labelledby="availability-title">
         <div className="portfolio-section-heading">
-          <div><span className="eyebrow">FEATURE AVAILABILITY</span><h2 id="availability-title">What this demonstration can do</h2></div>
+          <div><span className="eyebrow">FEATURE AVAILABILITY</span><h2 id="availability-title">What this local preview can do</h2></div>
           <button type="button" className="text-link" onClick={onOpenSources}>Sources & attribution <ArrowUpRight size={14} /></button>
         </div>
         {statusError && <p className="catalog-error" role="alert">{statusError}</p>}
         {status && !demoModeConfirmed && (
           <p className="catalog-error" role="alert">
-            The backend has not confirmed public read-only mode. Set PUBLIC_DEMO_MODE=true before exposing this build.
+            Backend configuration controls technical routes only; it does not authorize public demonstrations, data distribution, or deployment.
           </p>
         )}
         <div className="portfolio-availability-grid">
@@ -171,7 +171,7 @@ export function PortfolioLanding({
           <Availability
             label="Private farm records"
             state="disabled"
-            detail="Authentication, registration, farm reads, and writes are disabled in public demo mode."
+            detail="Authentication, registration, farm reads, and writes are disabled in this technical configuration."
           />
           <Availability
             label="Weather, market, soil & AI models"
@@ -184,10 +184,11 @@ export function PortfolioLanding({
       <section className="portfolio-guardrail glass-card">
         <div className="portfolio-guardrail-icon"><LockKeyhole size={17} /></div>
         <div>
-          <h2>Portfolio today; commercial use is a separate approval.</h2>
+          <h2>Technical capability is not activity authorization.</h2>
           <p>
-            Dataset access, attribution, and permission are reviewed resource by resource. A
-            non-commercial or educational permission is never treated as commercial clearance.
+            Publisher terms and internal classifications do not establish source-owner permission or
+            project-owner authorization. Each proposed activity requires its own applicable permission;
+            public demonstration, research, redistribution, training, commercial use, and deployment remain NOT AUTHORIZED.
           </p>
         </div>
         <button type="button" className="button button-secondary" onClick={onOpenSources}>Review data status</button>
@@ -207,7 +208,7 @@ export function ProjectArchitecture() {
         <div className="architecture-grid">
           <article className="architecture-card glass-card">
             <Sprout size={19} /><h3>React + TypeScript + Vite</h3>
-            <p>Public catalogue UI and local authenticated workspace share the existing client; the demo build hides private account features.</p>
+            <p>Catalogue UI and authenticated workspace share the existing client; this local preview hides private account features.</p>
           </article>
           <article className="architecture-card glass-card">
             <Server size={19} /><h3>FastAPI</h3>
@@ -215,7 +216,7 @@ export function ProjectArchitecture() {
           </article>
           <article className="architecture-card glass-card">
             <Database size={19} /><h3>PostgreSQL + PostGIS</h3>
-            <p>SQLAlchemy and Alembic manage catalog and private spatial records. The public demo exposes no farmer-owned rows.</p>
+            <p>SQLAlchemy and Alembic manage catalogue and private spatial records. The local preview exposes no farmer-owned rows.</p>
           </article>
           <article className="architecture-card glass-card">
             <Leaf size={19} /><h3>Data and model services</h3>
@@ -224,18 +225,18 @@ export function ProjectArchitecture() {
         </div>
       </section>
       <section className="portfolio-section glass-card architecture-contracts">
-        <h2>Public API contract</h2>
+        <h2>Catalogue API contract</h2>
         <ul>
           <li><code>GET /api/v1/districts</code> — paginated Kerala districts</li>
           <li><code>GET /api/v1/crop-categories</code>, <code>GET /api/v1/crops</code> — catalogue and category filters</li>
           <li><code>GET /api/v1/crops/{'{crop_id}'}</code>, profile, and varieties — record-level verification and sources</li>
           <li><code>GET /api/v1/districts/{'{district_id}'}/crops</code> — only recorded district associations</li>
         </ul>
-        <p>All private farm and plot endpoints require authorization and are disabled when the backend is configured for public demo mode.</p>
+        <p>All private farm and plot endpoints require authentication and are disabled in the local preview configuration. This technical setting does not grant authorization for external use.</p>
       </section>
       <section className="portfolio-section architecture-boundaries">
         <div><LockKeyhole size={16} /><strong>Authentication boundary</strong><p>Registration and login are disabled in demo mode. Local development keeps the existing JWT flow.</p></div>
-        <div><Cloud size={16} /><strong>External services</strong><p>No paid service is required for the portfolio. Credentials stay on the backend and are not part of the frontend bundle.</p></div>
+        <div><Cloud size={16} /><strong>External services</strong><p>No external service is connected in this local preview. Credentials stay on the backend and are not part of the frontend bundle.</p></div>
       </section>
     </div>
   );
@@ -250,8 +251,11 @@ export function PortfolioDataSources() {
           <span className="portfolio-state">No source approved for model training</span>
         </div>
         <p className="portfolio-source-intro">
-          Source status is tracked separately for portfolio display and future training/commercial use.
-          Public availability is not permission to redistribute, train, or commercialize.
+          Portfolio classifications are internal assessments of apparent publisher licence/terms compatibility only.
+          They are not project-owner authorization, source-owner permission, or approval to access/acquire data,
+          conduct research, train ML, publicly demonstrate, or deploy. Portfolio/demo and pilot research are
+          separate project permission scopes; both are currently NOT AUTHORIZED. Public availability is not
+          permission to redistribute, train, or commercialize.
         </p>
         <div className="portfolio-source-grid">
           {sourceInventory.datasets.map((source) => {
@@ -271,7 +275,10 @@ export function PortfolioDataSources() {
                     {portfolioStatusLabels[sourceStatus]}
                   </span>
                 </div>
-                <p>{portfolioReview?.rationale ?? "Portfolio use has not been reviewed."}</p>
+                <p>
+                  <strong>Internal licence/terms assessment; not project authorization:</strong>{" "}
+                  {portfolioReview?.rationale ?? "Portfolio use has not been reviewed."}
+                </p>
                 <p>{review?.license_name ?? source.license}</p>
                 <dl>
                   <div><dt>Attribution</dt><dd>{review?.attribution_obligations ?? "Not verified"}</dd></div>

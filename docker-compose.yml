@@ -16,14 +16,21 @@ services:
 
   api:
     build: ./backend
+    volumes:
+      - ./data/metadata:/app/data/metadata:ro
+      - research_data:/app/.agrosense
     environment:
       DATABASE_URL: postgresql+psycopg://agrosense:${POSTGRES_PASSWORD}@db:5432/agrosense
       JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
+      RESEARCH_DOCUMENT_DIR: /app/.agrosense/research_documents
       FRONTEND_ORIGINS: ${FRONTEND_ORIGINS:-http://localhost:8080}
       PUBLIC_DEMO_MODE: ${PUBLIC_DEMO_MODE:-false}
+      OPEN_METEO_NONCOMMERCIAL_ENABLED: ${OPEN_METEO_NONCOMMERCIAL_ENABLED:-false}
+      AGRICULTURAL_ADMIN_EMAILS: ${AGRICULTURAL_ADMIN_EMAILS:-}
       SENTINEL_HUB_CLIENT_ID: ${SENTINEL_HUB_CLIENT_ID:-}
       SENTINEL_HUB_CLIENT_SECRET: ${SENTINEL_HUB_CLIENT_SECRET:-}
       AGMARKNET_API_KEY: ${AGMARKNET_API_KEY:-}
+      AGMARKNET_REUSE_CONFIRMED: ${AGMARKNET_REUSE_CONFIRMED:-false}
     depends_on:
       db:
         condition: service_healthy
@@ -45,3 +52,4 @@ services:
 
 volumes:
   postgres_data:
+  research_data:

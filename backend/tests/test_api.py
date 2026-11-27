@@ -2,9 +2,14 @@ from uuid import uuid4
 
 import pytest
 from pydantic import ValidationError
+from sqlalchemy import select
 from sqlalchemy.engine import make_url
 
 from app.config import Settings
+from app.database import get_db
+from app.main import app
+from app.models import Crop, CropCategory, User
+from app.schemas import normalized_key
 
 BOUNDARY = {
     "type": "Polygon",
@@ -52,6 +57,10 @@ def test_health_authentication_and_openapi(client, test_email, test_emails):
         "/api/v1/auth/register",
         json={"email": "short-password@example.com", "password": "short"},
     ).status_code == 422
+    assert client.post(
+        "/api/v1/auth/register",
+        json={"email": "catalog-admin@example.com", "password": "secure-test-password"},
+    ).status_code == 403
     register(client, test_email, test_emails)
     duplicate = client.post(
         "/api/v1/auth/register",
@@ -247,6 +256,197 @@ def test_frontend_origins_are_explicit_and_support_multiple_origins():
 
     assert settings.cors_origins == ["http://localhost:5173", "https://portfolio.example"]
     assert Settings(frontend_origins="").cors_origins == []
+
+
+def test_plot_crop_area_and_saved_location_are_associated_without_boundary(client, test_email, test_emails):
+    register(client, test_email, test_emails)
+    auth = {"Authorization": f"Bearer {login(client, test_email)}"}
+    farm = client.post("/api/v1/farms", headers=auth, json={"name": "Home farm"}).json()
+
+    dependency = app.dependency_overrides[get_db]()
+    session = next(dependency)
+    try:
+        category = CropCategory(
+            name="Plantation and spices",
+            name_key=normalized_key("Plantation and spices"),
+            slug="plantation-and-spices",
+            display_order=1,
+        )
+        crop = Crop(
+            common_name="Cardamom",
+            common_name_key=normalized_key("Cardamom"),
+            slug="cardamom",
+            category=category,
+        )
+        session.add(crop)
+        session.commit()
+        crop_id = crop.id
+    finally:
+        dependency.close()
+
+    response = client.post(
+        f"/api/v1/farms/{farm['id']}/plots",
+        headers=auth,
+        json={
+            "crop_id": str(crop_id),
+            "area_value": 1.25,
+            "area_unit": "hectares",
+            "latitude": 9.85,
+            "longitude": 76.97,
+        },
+    )
+    assert response.status_code == 201
+    plot = response.json()
+    assert plot["crop_id"] == str(crop_id)
+    assert plot["crop"] == "Cardamom"
+    assert plot["area_value"] == 1.25
+    assert plot["area_unit"] == "hectares"
+    assert plot["latitude"] == 9.85
+    assert plot["longitude"] == 76.97
+    assert plot["boundary"] is None
+
+    invalid_area = client.post(
+        f"/api/v1/farms/{farm['id']}/plots",
+        headers=auth,
+        json={"crop_id": str(crop_id), "area_value": 1, "latitude": 9.85},
+    )
+    assert invalid_area.status_code == 422
+
+
+def test_temporary_admin_password_is_required_to_change_before_private_access(client, test_email, test_emails):
+    register(client, test_email, test_emails)
+    dependency = app.dependency_overrides[get_db]()
+    session = next(dependency)
+    try:
+        user = session.scalar(select(User).where(User.email == test_email))
+        assert user is not None
+        user.must_change_password = True
+        session.commit()
+    finally:
+        dependency.close()
+
+    temporary_login = client.post(
+        "/api/v1/auth/token",
+        data={"username": test_email, "password": "secure-test-password"},
+    )
+    assert temporary_login.status_code == 200
+    assert temporary_login.json()["must_change_password"] is True
+    auth = {"Authorization": f"Bearer {temporary_login.json()['access_token']}"}
+    assert client.get("/api/v1/farms", headers=auth).status_code == 403
+    assert client.post(
+        "/api/v1/auth/change-password",
+        headers=auth,
+        json={"new_password": "updated-research-password"},
+    ).status_code == 200
+    assert client.get("/api/v1/farms", headers=auth).status_code == 200
+    updated_login = client.post(
+        "/api/v1/auth/token",
+        data={"username": test_email, "password": "updated-research-password"},
+    )
+    assert updated_login.status_code == 200
+    assert updated_login.json()["must_change_password"] is False
+
+
+def test_admin_dashboard_is_available_only_to_allowlisted_accounts(
+    client, test_email, test_emails, monkeypatch
+):
+    from app.config import get_settings
+
+    monkeypatch.setattr(get_settings(), "agmarknet_api_key", "")
+    monkeypatch.setattr(get_settings(), "agmarknet_reuse_confirmed", False)
+    register(client, test_email, test_emails)
+    farmer_token = login(client, test_email)
+    farmer_summary = client.get(
+        "/api/v1/admin/summary",
+        headers={"Authorization": f"Bearer {farmer_token}"},
+    )
+    assert farmer_summary.status_code == 403
+
+    admin_email = "catalog-admin@example.com"
+    test_emails.append(admin_email)
+    from app.security import hash_password
+
+    dependency = app.dependency_overrides[get_db]()
+    session = next(dependency)
+    try:
+        session.add(
+            User(
+                email=admin_email,
+                password_hash=hash_password("secure-admin-test-password"),
+            )
+        )
+        session.commit()
+    finally:
+        dependency.close()
+
+    admin_login = client.post(
+        "/api/v1/auth/token",
+        data={"username": admin_email, "password": "secure-admin-test-password"},
+    )
+    assert admin_login.status_code == 200
+    admin_token = admin_login.json()["access_token"]
+    response = client.get(
+        "/api/v1/admin/summary",
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["users"] == 2
+    assert body["districts"] >= 0
+    assert body["integrations"]["agmarknet"]["configured"] is False
+
+
+def test_admin_bootstrap_prints_one_time_credentials_and_marks_password_for_change(
+    client, test_emails, monkeypatch, capsys
+):
+    from app import bootstrap_admin
+
+    email = "catalog-admin@example.com"
+    test_emails.append(email)
+
+    class SessionContext:
+        def __enter__(self):
+            self.dependency = app.dependency_overrides[get_db]()
+            return next(self.dependency)
+
+        def __exit__(self, *_):
+            self.dependency.close()
+
+    monkeypatch.setenv("ADMIN_BOOTSTRAP_EMAIL", email)
+    monkeypatch.setattr(bootstrap_admin, "SessionLocal", SessionContext)
+    monkeypatch.setattr(bootstrap_admin.sys, "argv", ["bootstrap_admin"])
+    bootstrap_admin.main()
+
+    lines = capsys.readouterr().out.splitlines()
+    assert lines[0] == f"Admin username: {email}"
+    temporary_password = lines[1].removeprefix("Temporary password (shown once): ")
+    assert len(temporary_password) >= 32
+    login_response = client.post(
+        "/api/v1/auth/token",
+        data={"username": email, "password": temporary_password},
+    )
+    assert login_response.status_code == 200
+    assert login_response.json()["must_change_password"] is True
+    assert client.get(
+        "/api/v1/farms",
+        headers={"Authorization": f"Bearer {login_response.json()['access_token']}"},
+    ).status_code == 403
+
+    monkeypatch.setattr(bootstrap_admin.sys, "argv", ["bootstrap_admin", "--reset"])
+    bootstrap_admin.main()
+    reset_lines = capsys.readouterr().out.splitlines()
+    reset_password = reset_lines[1].removeprefix("Temporary password (shown once): ")
+    assert client.post(
+        "/api/v1/auth/token",
+        data={"username": email, "password": temporary_password},
+    ).status_code == 401
+    reset_login = client.post(
+        "/api/v1/auth/token",
+        data={"username": email, "password": reset_password},
+    )
+    assert reset_login.status_code == 200
+    assert reset_login.json()["must_change_password"] is True
 
 
 def test_hosted_postgres_url_validation_keeps_credentials_secret():
