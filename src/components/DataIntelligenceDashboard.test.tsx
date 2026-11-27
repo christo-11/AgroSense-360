@@ -3,17 +3,22 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { api } from "../api";
 import DataIntelligenceDashboard from "./DataIntelligenceDashboard";
 
-vi.mock("../api", () => ({
-  api: {
-    dataIntelligenceSummary: vi.fn(),
-    dataIntelligenceSources: vi.fn(),
-    dataIntelligenceAcquisitions: vi.fn(),
-    dataIntelligenceQuality: vi.fn(),
-    dataIntelligenceTrainingEligibility: vi.fn(),
-    dataIntelligenceCatalogue: vi.fn(),
-    dataIntelligenceProvenance: vi.fn(),
-  },
-}));
+vi.mock("../api", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../api")>();
+  return {
+    ...actual,
+    api: {
+      ...actual.api,
+      dataIntelligenceSummary: vi.fn(),
+      dataIntelligenceSources: vi.fn(),
+      dataIntelligenceAcquisitions: vi.fn(),
+      dataIntelligenceQuality: vi.fn(),
+      dataIntelligenceTrainingEligibility: vi.fn(),
+      dataIntelligenceCatalogue: vi.fn(),
+      dataIntelligenceProvenance: vi.fn(),
+    },
+  };
+});
 
 const summary = {
   total_sources: 1,
@@ -237,7 +242,7 @@ describe("DataIntelligenceDashboard", () => {
     expect(screen.getByText("The inspected data quality report rejects this source for training.")).toBeTruthy();
     expect(screen.getAllByText("Provenance conflict").length).toBeGreaterThan(0);
     expect(screen.getByText("Exact CDS request parameters remain unconfirmed.")).toBeTruthy();
-    expect(screen.getAllByText("Archive size does not match the manifest.").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Archive size does not match the manifest.")).toHaveLength(1);
     expect(screen.getByText(/does not generate crop predictions or recommendations/)).toBeTruthy();
   });
 

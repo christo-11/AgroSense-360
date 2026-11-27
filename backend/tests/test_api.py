@@ -354,6 +354,9 @@ def test_admin_dashboard_is_available_only_to_allowlisted_accounts(
 
     monkeypatch.setattr(get_settings(), "agmarknet_api_key", "")
     monkeypatch.setattr(get_settings(), "agmarknet_reuse_confirmed", False)
+    monkeypatch.setattr(get_settings(), "open_meteo_noncommercial_enabled", False)
+    monkeypatch.setattr(get_settings(), "sentinel_hub_client_id", "")
+    monkeypatch.setattr(get_settings(), "sentinel_hub_client_secret", "")
     register(client, test_email, test_emails)
     farmer_token = login(client, test_email)
     farmer_summary = client.get(
@@ -395,6 +398,10 @@ def test_admin_dashboard_is_available_only_to_allowlisted_accounts(
     assert body["users"] == 2
     assert body["districts"] >= 0
     assert body["integrations"]["agmarknet"]["configured"] is False
+    assert body["integrations"]["weather"]["configured"] is False
+    assert "OPEN_METEO_NONCOMMERCIAL_ENABLED=true" in body["integrations"]["weather"]["detail"]
+    assert body["integrations"]["sentinel_2"]["configured"] is False
+    assert "SENTINEL_HUB_CLIENT_ID" in body["integrations"]["sentinel_2"]["detail"]
 
 
 def test_admin_bootstrap_prints_one_time_credentials_and_marks_password_for_change(

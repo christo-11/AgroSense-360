@@ -209,12 +209,13 @@ def test_forecast_requires_noncommercial_opt_in_and_marks_model_estimates(client
         "_request_json",
         lambda *_: {
             "hourly": {
-                "time": ["2026-11-24T00:00"],
-                "temperature_2m": [25],
-                "relative_humidity_2m": [80],
-                "precipitation": [0],
-                "wind_speed_10m": [3],
-                "shortwave_radiation": [0],
+                "time": ["2026-11-24T00:00", "2026-11-24T01:00"],
+                "temperature_2m": [25, 24],
+                "relative_humidity_2m": [80, 60],
+                "precipitation": [0, 0],
+                "wind_speed_10m": [3, 2],
+                "shortwave_radiation": [0, 0],
+                "weather_code": [2, 3],
             },
             "hourly_units": {},
             "daily": {
@@ -224,6 +225,7 @@ def test_forecast_requires_noncommercial_opt_in_and_marks_model_estimates(client
                 "precipitation_sum": [4.5],
                 "precipitation_probability_max": [60],
                 "wind_speed_10m_max": [12],
+                "weather_code": [3],
             },
             "daily_units": {},
         },
@@ -242,6 +244,8 @@ def test_forecast_requires_noncommercial_opt_in_and_marks_model_estimates(client
                 "precipitation_sum": 4.5,
                 "precipitation_probability_max": 60,
                 "wind_speed_10m_max": 12,
+                "weather_code": 3,
+                "relative_humidity_2m_mean": 70,
             },
         }
     ]
@@ -262,6 +266,7 @@ def test_current_weather_is_cached_source_attributed_model_estimate(client, test
                 "relative_humidity_2m": 78,
                 "precipitation": 0.2,
                 "wind_speed_10m": 4.5,
+                "weather_code": 2,
             },
             "current_units": {},
         }
@@ -282,6 +287,8 @@ def test_current_weather_is_cached_source_attributed_model_estimate(client, test
     assert body["values"]["precipitation"] == 0.2
     assert body["values"]["relative_humidity_2m"] == 78
     assert body["values"]["wind_speed_10m"] == 4.5
+    assert body["values"]["weather_code"] == 2
+    assert "weather_code" in calls[0][0]
     assert "CC BY 4.0" in body["attribution"]
     assert calls[0][1] == weather.CACHE_CURRENT_TTL_SECONDS
 

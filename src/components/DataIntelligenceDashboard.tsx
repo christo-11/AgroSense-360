@@ -9,6 +9,7 @@ import {
   ThermometerSun,
 } from "lucide-react";
 import {
+  ApiError,
   api,
   type CatalogueCompletenessResponse,
   type DataIntelligenceSummary,
@@ -68,7 +69,16 @@ function formatUtc(value: string) {
 }
 
 function loadErrorMessage(reason: unknown) {
-  return reason instanceof Error ? reason.message : "The API returned an unexpected error.";
+  if (reason instanceof ApiError) {
+    if (reason.status === 401 || reason.status === 403) {
+      return "Your session cannot access this evidence section. Sign in again or contact an administrator.";
+    }
+    if (reason.status >= 500) {
+      return "The server could not load this evidence section. Retry shortly; contact an administrator if it continues.";
+    }
+    return "The server could not load this evidence section. Retry or contact an administrator.";
+  }
+  return "Could not connect to the evidence service. Check the API connection and retry.";
 }
 
 function SourceStatus({ value }: { value: string }) {
@@ -163,6 +173,7 @@ export default function DataIntelligenceDashboard() {
     ...(summary?.validation_warnings ?? summary?.metadata_warnings ?? []),
     ...acquisitionWarnings,
   ])];
+  const summaryWarningSet = new Set(validationWarnings);
   const acquisitionStatusRows = Object.entries(summary?.acquisition_status_counts ?? {})
     .filter(([, count]) => Number.isFinite(count) && count > 0)
     .sort(([left], [right]) => statusLabel(left).localeCompare(statusLabel(right)));
@@ -369,7 +380,7 @@ export default function DataIntelligenceDashboard() {
                     Inventory: <SourceStatus value={entry.inventory_status} /> · Archive integrity: <SourceStatus value={entry.archive_integrity_status} /> · Data quality: <SourceStatus value={entry.data_quality_status} />
                   </p>
                   <p className="di-panel-copy">{entry.status_explanation}</p>
-                  {entry.validation_warnings.map((warning) => (
+                  {entry.validation_warnings.filter((warning) => !summaryWarningSet.has(warning)).map((warning) => (
                     <div className="di-warning" role="note" key={warning}>
                       <ShieldAlert size={16} /><span>{warning}</span>
                     </div>
@@ -380,7 +391,7 @@ export default function DataIntelligenceDashboard() {
                       <span>{artifact.request_status}</span>
                       <span>Archive integrity: <SourceStatus value={artifact.archive_integrity_status} /> · Data quality: <SourceStatus value={artifact.data_quality_status} /></span>
                       <small>Recorded size: {formatBytes(artifact.size_bytes)} · observed size: {formatBytes(artifact.actual_size_bytes)} · {artifact.retrieved_at ? formatUtc(artifact.retrieved_at) : "retrieval time not recorded"}</small>
-                      {artifact.validation_warnings.map((warning) => <small className="di-warning-text" key={warning}>{warning}</small>)}
+                      {artifact.validation_warnings.filter((warning) => !summaryWarningSet.has(warning)).map((warning) => <small className="di-warning-text" key={warning}>{warning}</small>)}
                     </div>
                   ))}
                 </article>
@@ -427,7 +438,7 @@ export default function DataIntelligenceDashboard() {
                 <small>{item.license ?? "License not recorded"} · {item.dataset_version ?? statusLabel(item.version_status)}</small>
                 <small>Inventory checked: {item.last_checked ?? "date not recorded"}</small>
                 <small>Acquisition: <SourceStatus value={item.acquisition_status} /> · Integrity: <SourceStatus value={item.archive_integrity_status} /> · Data quality: <SourceStatus value={item.data_quality_status} /></small>
-                {item.validation_warnings.map((warning) => <small className="di-warning-text" key={warning}>{warning}</small>)}
+                {item.validation_warnings.filter((warning) => !summaryWarningSet.has(warning)).map((warning) => <small className="di-warning-text" key={warning}>{warning}</small>)}
                 {item.artifacts.map((artifact) => (
                   <details key={artifact.request_number}>
                     <summary>Request {artifact.request_number} provenance evidence</summary>

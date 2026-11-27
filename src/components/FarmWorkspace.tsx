@@ -65,6 +65,40 @@ function formatUtcTimestamp(value: string) {
     : `${timestamp.toISOString().slice(0, 16).replace("T", " ")} UTC`;
 }
 
+function weatherCondition(value: number | null | undefined) {
+  const conditions: Record<number, string> = {
+    0: "Clear sky",
+    1: "Mainly clear",
+    2: "Partly cloudy",
+    3: "Overcast",
+    45: "Fog",
+    48: "Depositing rime fog",
+    51: "Light drizzle",
+    53: "Moderate drizzle",
+    55: "Dense drizzle",
+    56: "Light freezing drizzle",
+    57: "Dense freezing drizzle",
+    61: "Slight rain",
+    63: "Moderate rain",
+    65: "Heavy rain",
+    66: "Light freezing rain",
+    67: "Heavy freezing rain",
+    71: "Slight snowfall",
+    73: "Moderate snowfall",
+    75: "Heavy snowfall",
+    77: "Snow grains",
+    80: "Slight rain showers",
+    81: "Moderate rain showers",
+    82: "Violent rain showers",
+    85: "Slight snow showers",
+    86: "Heavy snow showers",
+    95: "Thunderstorm",
+    96: "Thunderstorm with slight hail",
+    99: "Thunderstorm with heavy hail",
+  };
+  return value == null || !Number.isInteger(value) ? "Not available" : conditions[value] ?? "Condition unavailable";
+}
+
 function WeatherFacts({ facts }: { facts: ReturnType<typeof weatherFacts> }) {
   return (
     <dl className="plot-weather-facts">
@@ -112,7 +146,7 @@ function PlotDashboardCard({
     void api.currentWeather(plot.latitude!, plot.longitude!).then((result) => {
       if (active) setCurrent(result);
     }).catch((error: unknown) => {
-      if (active) setCurrentError(error instanceof Error ? error.message : "Current weather is unavailable.");
+      if (active) setCurrentError(error instanceof ApiError ? error.message : "Current weather is unavailable. Check your connection and retry.");
     }).finally(() => {
       if (active) setCurrentLoading(false);
     });
@@ -146,7 +180,7 @@ function PlotDashboardCard({
     try {
       setForecast(await api.weatherForecast(plot.latitude!, plot.longitude!));
     } catch (error) {
-      setForecastError(error instanceof Error ? error.message : "The forecast is unavailable.");
+      setForecastError(error instanceof ApiError ? error.message : "The forecast is unavailable. Check your connection and retry.");
     } finally {
       setForecastLoading(false);
     }
@@ -216,7 +250,7 @@ function PlotDashboardCard({
         kind: "historical",
       });
     } catch (error) {
-      setSelectedError(error instanceof Error ? error.message : "Weather data could not be loaded.");
+      setSelectedError(error instanceof ApiError ? error.message : "Weather data could not be loaded. Check your connection and retry.");
     } finally {
       setSelectedLoading(false);
     }
@@ -263,6 +297,7 @@ function PlotDashboardCard({
               humidity: "relative_humidity_2m",
               wind: "wind_speed_10m",
             })} />
+            <p className="plot-weather-condition"><strong>Condition:</strong> {weatherCondition(current.values.weather_code)}</p>
             <p className="plot-weather-source">
               {current.provider} · Data time {formatUtcTimestamp(current.timestamp)}
               {" · Fetched "}{formatUtcTimestamp(current.requested_at)}
@@ -293,7 +328,9 @@ function PlotDashboardCard({
               {(forecast.daily_records ?? []).map((day) => (
                 <article key={day.date}>
                   <strong>{new Intl.DateTimeFormat("en", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" }).format(new Date(`${day.date}T00:00:00Z`))}</strong>
+                  <span>{weatherCondition(day.values.weather_code)}</span>
                   <span>{day.values.temperature_2m_min?.toFixed(0) ?? "—"}° / {day.values.temperature_2m_max?.toFixed(0) ?? "—"}°C</span>
+                  <span>Humidity avg {day.values.relative_humidity_2m_mean?.toFixed(0) ?? "—"}%</span>
                   <span>Rain {day.values.precipitation_sum?.toFixed(1) ?? "—"} mm</span>
                   <span>Wind {day.values.wind_speed_10m_max?.toFixed(1) ?? "—"} km/h</span>
                 </article>
@@ -327,6 +364,9 @@ function PlotDashboardCard({
             <WeatherFacts facts={weatherFacts(selectedWeather.values, selectedWeather.units, selectedWeather.kind === "forecast"
               ? { temperature: "temperature_2m", rainfall: "precipitation", humidity: "relative_humidity_2m", wind: "wind_speed_10m" }
               : { temperature: "T2M", rainfall: "PRECTOTCORR", humidity: "RH2M", wind: "WS2M" })} />
+            {selectedWeather.kind === "forecast" && (
+              <p className="plot-weather-condition"><strong>Condition:</strong> {weatherCondition(selectedWeather.values.weather_code)}</p>
+            )}
             <p className="plot-weather-source">
               {selectedWeather.provider} · {formatUtcTimestamp(selectedWeather.timestamp)}
               {" · "}<a href={selectedWeather.sourceUrl} target="_blank" rel="noreferrer">Source</a>
@@ -344,7 +384,7 @@ function PlotDashboardCard({
 
       <section className="plot-card-section">
         <div className="plot-card-section-heading"><h4><Activity size={15} /> Crop information</h4></div>
-        <p className="plot-dashboard-state">Crop health is not assessed; no verified plot-level health evidence is available.</p>
+        <p className="plot-dashboard-state">Crop health is not assessed. An assessment requires dated, plot-linked crop images or field observations with crop and growth stage, plus expert-confirmed condition labels; no validated model is deployed.</p>
         {profileLoading && <p className="plot-dashboard-state" role="status">Checking verified crop information…</p>}
         {profileError && <p className="plot-dashboard-error" role="alert">{profileError} No recommendations are displayed.</p>}
         {!profileLoading && !profileError && recommendationFacts.length > 0 ? (

@@ -122,6 +122,8 @@ Weather is shown on each saved plot; farmers do not enter coordinates or weather
 
 Open-Meteo access is disabled by default. Enable `OPEN_METEO_NONCOMMERCIAL_ENABLED=true` only when the intended use qualifies under the [free API terms](https://open-meteo.com/en/terms); the free service is non-commercial and API data require CC BY 4.0 attribution. The setting is optional in local startup; do not enable it for commercial use. No API key or automatic model download is involved.
 
+Current and forecast condition descriptions are derived from Open-Meteo's WMO weather codes. Daily mean humidity is calculated from that day's hourly forecast estimates; all displayed weather remains model output, not a station observation.
+
 Market prices use the Government of India AGMARKNET daily mandi resource through the [data.gov.in API](https://www.data.gov.in/resource/current-daily-price-various-commodities-various-markets-mandi). Prices are daily reported records, not real-time quotes, and missing values are never estimated. Configure `AGMARKNET_API_KEY` on the API server and set `AGMARKNET_REUSE_CONFIRMED=true` only after verifying the resource-specific licence, attribution, intended-use terms, and reported price unit from the official resource page. The current project has no API key and the resource page was inaccessible during verification, so live prices are intentionally unavailable by default. The adapter displays the source's standard INR-per-quintal fields only after this explicit operator gate.
 
 Install the research dependencies and start the backend from PowerShell:

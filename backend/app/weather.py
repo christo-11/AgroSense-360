@@ -45,6 +45,7 @@ FORECAST_PARAMETERS = (
     "precipitation",
     "wind_speed_10m",
     "shortwave_radiation",
+    "weather_code",
 )
 FORECAST_UNITS = {
     "temperature_2m": "degC",
@@ -52,6 +53,7 @@ FORECAST_UNITS = {
     "precipitation": "mm",
     "wind_speed_10m": "km/h",
     "shortwave_radiation": "W/m^2",
+    "weather_code": "WMO code",
 }
 DAILY_FORECAST_PARAMETERS = (
     "temperature_2m_max",
@@ -59,6 +61,7 @@ DAILY_FORECAST_PARAMETERS = (
     "precipitation_sum",
     "precipitation_probability_max",
     "wind_speed_10m_max",
+    "weather_code",
 )
 DAILY_FORECAST_UNITS = {
     "temperature_2m_max": "degC",
@@ -66,6 +69,7 @@ DAILY_FORECAST_UNITS = {
     "precipitation_sum": "mm",
     "precipitation_probability_max": "%",
     "wind_speed_10m_max": "km/h",
+    "weather_code": "WMO code",
 }
 CACHE_TTL_SECONDS = 6 * 60 * 60
 CACHE_MONTHLY_TTL_SECONDS = 24 * 60 * 60
@@ -92,7 +96,9 @@ def _request_json(url: str, cache_ttl: int) -> dict[str, Any]:
     try:
         with urlopen(request, timeout=20) as response:
             if response.status != 200:
-                raise WeatherProviderError(f"Weather provider returned HTTP {response.status}.")
+                raise WeatherProviderError(
+                    "The weather service is temporarily unavailable. Please try again shortly."
+                )
             payload = response.read(8 * 1024 * 1024 + 1)
     except (OSError, URLError) as error:
         raise WeatherProviderError("Weather provider could not be reached.") from error
@@ -149,12 +155,19 @@ def current_weather(
             ),
         )
 
-    parameters = ("temperature_2m", "relative_humidity_2m", "precipitation", "wind_speed_10m")
+    parameters = (
+        "temperature_2m",
+        "relative_humidity_2m",
+        "precipitation",
+        "wind_speed_10m",
+        "weather_code",
+    )
     units_fallback = {
         "temperature_2m": "degC",
         "relative_humidity_2m": "%",
         "precipitation": "mm",
         "wind_speed_10m": "km/h",
+        "weather_code": "WMO code",
     }
     query = urlencode(
         {
@@ -432,6 +445,11 @@ def weather_forecast(
         columns = {key: hourly.get(key) for key in FORECAST_PARAMETERS}
         if any(not isinstance(values, list) or len(values) != len(times) for values in columns.values()):
             raise TypeError
+        humidity_by_date: dict[str, list[float]] = {}
+        for timestamp, raw_humidity in zip(times, columns["relative_humidity_2m"]):
+            humidity = _number(raw_humidity)
+            if humidity is not None:
+                humidity_by_date.setdefault(timestamp[:10], []).append(humidity)
         daily = payload["daily"]
         daily_times = daily["time"]
         if (
@@ -456,6 +474,12 @@ def weather_forecast(
                 "values": {
                     key: _number(daily_columns[key][index])
                     for key in DAILY_FORECAST_PARAMETERS
+                } | {
+                    "relative_humidity_2m_mean": (
+                        sum(humidity_by_date[day]) / len(humidity_by_date[day])
+                        if humidity_by_date.get(day)
+                        else None
+                    ),
                 },
             }
             for index, day in enumerate(daily_times)
@@ -486,7 +510,7 @@ def weather_forecast(
         "daily_units": {
             key: daily_units.get(key, DAILY_FORECAST_UNITS[key])
             for key in DAILY_FORECAST_PARAMETERS
-        },
+        } | {"relative_humidity_2m_mean": "%"},
         "records": records,
         "daily_records": daily_records,
         "cached_for_seconds": 10 * 60,

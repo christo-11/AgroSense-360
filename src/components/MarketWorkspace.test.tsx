@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { api } from "../api";
+import { api, ApiError } from "../api";
 import MarketWorkspace from "./MarketWorkspace";
 
 vi.mock("../api", async (importOriginal) => {
@@ -26,12 +26,15 @@ describe("MarketWorkspace", () => {
   afterEach(cleanup);
 
   it("shows provider errors and offers a retry without inventing prices", async () => {
-    vi.mocked(api.marketPrices).mockRejectedValue(new Error("Market prices are unavailable: configure an authorized data.gov.in API key."));
+    vi.mocked(api.marketPrices).mockRejectedValue(new ApiError(
+      "Market prices are unavailable. Configure AGMARKNET_API_KEY with an authorized data.gov.in API key.",
+      503,
+    ));
     render(<MarketWorkspace authenticated fixedCommodity="Black pepper" />);
 
     fireEvent.click(screen.getByRole("button", { name: "Find market prices" }));
 
-    expect((await screen.findByRole("alert")).textContent).toMatch(/configure an authorized data.gov.in API key/);
+    expect((await screen.findByRole("alert")).textContent).toMatch(/AGMARKNET_API_KEY/);
     expect(screen.getByRole("button", { name: "Retry" })).toBeTruthy();
     expect(screen.queryByText(/₹/)).toBeNull();
   });

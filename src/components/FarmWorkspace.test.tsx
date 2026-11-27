@@ -119,7 +119,7 @@ describe("FarmWorkspace plot dashboard", () => {
       timestamp: "2026-11-24T05:30",
       requested_at: "2026-11-24T05:30:05Z",
       units: { temperature_2m: "°C", relative_humidity_2m: "%", precipitation: "mm", wind_speed_10m: "km/h" },
-      values: { temperature_2m: 27.1, relative_humidity_2m: 78, precipitation: 0.2, wind_speed_10m: 4.5 },
+      values: { temperature_2m: 27.1, relative_humidity_2m: 78, precipitation: 0.2, wind_speed_10m: 4.5, weather_code: 2 },
       cached_for_seconds: 600,
     });
     vi.mocked(api.weatherForecast).mockResolvedValue({
@@ -143,6 +143,8 @@ describe("FarmWorkspace plot dashboard", () => {
           precipitation_sum: 3.2,
           precipitation_probability_max: 50,
           wind_speed_10m_max: 12,
+          weather_code: 3,
+          relative_humidity_2m_mean: 79,
         },
       }],
       cached_for_seconds: 600,
@@ -194,9 +196,11 @@ describe("FarmWorkspace plot dashboard", () => {
     expect(await screen.findByRole("heading", { name: "Cardamom" })).toBeTruthy();
     expect(await screen.findByText("27.1 °C")).toBeTruthy();
     expect(screen.getByText("0.2 mm")).toBeTruthy();
+    expect(screen.getByText("Partly cloudy")).toBeTruthy();
+    expect(screen.getByText("Condition:")).toBeTruthy();
     expect(screen.getByText(/Current conditions/)).toBeTruthy();
     expect(screen.getByText("Model estimate", { exact: true })).toBeTruthy();
-    expect(screen.getByText("Crop health is not assessed; no verified plot-level health evidence is available.")).toBeTruthy();
+    expect(screen.getByText(/Crop health is not assessed.*expert-confirmed condition labels/)).toBeTruthy();
     expect(screen.getByText("No verified crop recommendations are available.")).toBeTruthy();
     expect(api.currentWeather).toHaveBeenCalledWith(9.85, 76.97);
   });
@@ -210,6 +214,8 @@ describe("FarmWorkspace plot dashboard", () => {
     expect(await screen.findByText("7-day forecast · model estimates")).toBeTruthy();
     expect(screen.getByText("22° / 31°C")).toBeTruthy();
     expect(screen.getByText("Rain 3.2 mm")).toBeTruthy();
+    expect(screen.getByText("Humidity avg 79%")).toBeTruthy();
+    expect(screen.getByText("Overcast")).toBeTruthy();
     expect(screen.getByText(/Weather data by Open-Meteo.com; API data CC BY 4.0/)).toBeTruthy();
     expect(api.weatherForecast).toHaveBeenCalledWith(9.85, 76.97);
   });

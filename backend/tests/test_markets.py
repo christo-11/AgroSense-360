@@ -35,7 +35,7 @@ def test_market_prices_require_key_and_explicit_reuse_confirmation(
     )
 
     assert response.status_code == 503
-    assert "API key" in response.json()["detail"]
+    assert "AGMARKNET_API_KEY" in response.json()["detail"]
     assert called == []
 
 
@@ -131,7 +131,7 @@ def test_market_prices_require_verified_reuse_terms(client, test_emails, monkeyp
     )
 
     assert response.status_code == 503
-    assert "reuse terms" in response.json()["detail"]
+    assert "AGMARKNET_REUSE_CONFIRMED=true" in response.json()["detail"]
     assert called == []
 
 
@@ -143,7 +143,7 @@ def test_market_price_provider_errors_are_reported(client, test_emails, monkeypa
         markets,
         "_request_json",
         lambda *_: (_ for _ in ()).throw(
-            markets.MarketProviderError("Market price provider could not be reached.")
+            markets.MarketProviderError("The daily market feed could not be reached. Please try again later.")
         ),
     )
 
@@ -154,4 +154,4 @@ def test_market_price_provider_errors_are_reported(client, test_emails, monkeypa
     )
 
     assert response.status_code == 502
-    assert response.json()["detail"] == "Market price provider could not be reached."
+    assert response.json()["detail"] == "The daily market feed could not be reached. Please try again later."

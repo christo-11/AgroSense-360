@@ -53,15 +53,17 @@ def _request_json(url: str) -> dict[str, Any]:
         with urlopen(request, timeout=20) as response:
             if response.status != 200:
                 raise MarketProviderError(
-                    f"Market price provider returned HTTP {response.status}."
+                    "The daily market feed is temporarily unavailable. Please try again later."
                 )
             body = response.read(4 * 1024 * 1024 + 1)
     except HTTPError as error:
         raise MarketProviderError(
-            "Market price provider rejected the request; check the API key and resource access."
+            "The daily market feed rejected the request. Check AGMARKNET_API_KEY and the resource access."
         ) from error
     except (OSError, URLError) as error:
-        raise MarketProviderError("Market price provider could not be reached.") from error
+        raise MarketProviderError(
+            "The daily market feed could not be reached. Please try again later."
+        ) from error
 
     if len(body) > 4 * 1024 * 1024:
         raise MarketProviderError("Market price response exceeded the size limit.")
@@ -129,14 +131,17 @@ def market_prices(
     if not settings.agmarknet_api_key:
         raise HTTPException(
             status_code=503,
-            detail="Market prices are unavailable: configure an authorized data.gov.in API key.",
+            detail=(
+                "Market prices are unavailable. Configure AGMARKNET_API_KEY with an authorized "
+                "data.gov.in API key."
+            ),
         )
     if not settings.agmarknet_reuse_confirmed:
         raise HTTPException(
             status_code=503,
             detail=(
-                "Market prices are disabled until the operator confirms the dataset's "
-                "resource-specific reuse terms and attribution requirements."
+                "Market prices are disabled. Verify the resource-specific reuse terms and attribution, "
+                "then set AGMARKNET_REUSE_CONFIRMED=true."
             ),
         )
 

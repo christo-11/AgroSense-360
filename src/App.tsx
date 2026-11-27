@@ -105,14 +105,14 @@ const portfolioNavigation: { name: Module; icon: typeof Activity }[] = [
 const moduleInfo: Record<Exclude<Module, "Overview" | "Crop catalogue" | "Data intelligence" | "Research assistant" | "Project architecture" | "Data sources" | "Admin">, { title: string; description: string; icon: typeof Activity; source: string; statusKey: string }> = {
   "Field intelligence": {
     title: "Satellite soil intelligence",
-    description: "Field-level SOC, pH and NPK insights require connected satellite imagery and a validated model.",
+    description: "No satellite soil results are available: Sentinel-2 processing and SoilGrids requests are not integrated.",
     icon: FlaskConical,
     source: "Sentinel-2 · SoilGrids",
     statusKey: "sentinel_2",
   },
   "Crop health": {
     title: "Crop health & disease",
-    description: "Upload an image only when a trained, validated inference model is available.",
+    description: "No crop-health assessment is available; no validated inference model is deployed.",
     icon: Leaf,
     source: "Computer vision model",
     statusKey: "disease_model",
@@ -551,6 +551,9 @@ function App() {
                 <div><h2>Daily market prices</h2><p>AGMARKNET via data.gov.in · market-reported values, not real-time quotes</p></div>
                 <StatusPill item={status?.integrations.agmarknet} />
               </div>
+              {status?.integrations.agmarknet?.configured === false && (
+                <div className="module-note" role="note"><LockKeyhole size={15} /><span>Configure AGMARKNET_API_KEY on the API server. Set AGMARKNET_REUSE_CONFIRMED=true only after verifying the resource-specific reuse terms and attribution.</span></div>
+              )}
               <MarketWorkspace authenticated={authenticated} onRequestSignIn={signOut} />
             </section>
           ) : active === "Admin" ? (
@@ -568,14 +571,16 @@ function App() {
                 <div><h2>{module.title}</h2><p>{module.source}</p></div>
                 <StatusPill item={status?.integrations[module.statusKey] ?? status?.models[module.statusKey]} />
               </div>
+              {active === "Field intelligence" && (
+                <div className="module-note" role="note"><LockKeyhole size={15} /><span>Setup requires Sentinel Hub access and an imagery-processing integration. SoilGrids requests are not implemented; soil estimates need authorized, georeferenced field samples for validation.</span></div>
+              )}
               {active === "Crop health" && (
-                <div className="module-note" role="note"><LockKeyhole size={15} /><span>Image upload is disabled until a validated model and authorized image data are available.</span></div>
+                <div className="module-note" role="note"><LockKeyhole size={15} /><span>No assessment is made. Required evidence: dated, plot-linked crop images or field observations identifying crop and growth stage, with expert-confirmed condition labels. No validated model is deployed.</span></div>
               )}
               {active === "AI copilot" && (
                 <div className="module-note" role="note"><LockKeyhole size={15} /><span>Copilot questions are disabled until its grounded knowledge service and verified sources are configured.</span></div>
               )}
               <EmptyChart label={active === "Crop health" ? "crop health results" : "farm insights"} />
-              <div className="module-note"><LockKeyhole size={15} /><span>Results are withheld until real data and required integrations are available. No demo predictions are used.</span></div>
             </section>
           ) : PORTFOLIO_DEMO ? (
             <PortfolioLanding
@@ -654,7 +659,7 @@ function App() {
               {[
                 ["Sentinel-2 imagery", "sentinel_2", "Satellite"],
                 ["SoilGrids", "soilgrids", "Soil"],
-                ["NASA GPM / ERA5-Land", "weather", "Weather"],
+                ["NASA POWER / Open-Meteo", "weather", "Weather"],
                 ["AGMARKNET", "agmarknet", "Markets"],
                 ["Soil & yield models", "soil_model", "Models"],
                 ["Crop disease model", "disease_model", "Models"],

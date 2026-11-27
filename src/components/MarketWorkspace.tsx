@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { RefreshCw, TrendingUp } from "lucide-react";
-import { api, type Crop, type District, type MarketPricesResponse } from "../api";
+import { api, ApiError, type Crop, type District, type MarketPricesResponse } from "../api";
 
 type Props = {
   authenticated: boolean;
@@ -23,6 +23,10 @@ function formatDate(value: string) {
   return Number.isNaN(parsed.getTime())
     ? value
     : new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeZone: "UTC" }).format(parsed);
+}
+
+function marketErrorMessage(reason: unknown, fallback: string) {
+  return reason instanceof ApiError ? reason.message : fallback;
 }
 
 export default function MarketWorkspace({
@@ -52,7 +56,7 @@ export default function MarketWorkspace({
       })
       .catch((reason: unknown) => {
         if (active) {
-          setCatalogueError(reason instanceof Error ? reason.message : "Market filters could not be loaded.");
+          setCatalogueError(marketErrorMessage(reason, "Market filters could not be loaded. Check the API connection and retry."));
         }
       });
     return () => { active = false; };
@@ -73,7 +77,7 @@ export default function MarketWorkspace({
     try {
       setResult(await api.marketPrices(commodity.trim(), district || undefined));
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Market prices could not be loaded.");
+      setError(marketErrorMessage(reason, "Market prices could not be loaded. Check the API connection and retry."));
     } finally {
       setLoading(false);
     }
